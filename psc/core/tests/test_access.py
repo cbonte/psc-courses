@@ -99,3 +99,47 @@ class AttemptCounterTests(PscTestCase):
         self.assertEqual(self._rows(), 1)
         self.client.post(reverse("core:access"), {"password": ACCESS_PASSWORD})
         self.assertEqual(self._rows(), 0)
+
+
+class DatabaseUrlTests(PscTestCase):
+    """Traduction d'une DATABASE_URL, sans serveur pour l'éprouver."""
+
+    @staticmethod
+    def _parse(url):
+        from psc.settings import _database_from_url
+
+        return _database_from_url(url)
+
+    def test_a_neon_url_is_translated(self):
+        config = self._parse(
+            "postgresql://user:secret@ep-x-1.eu-central-1.aws.neon.tech/pscdb?sslmode=require"
+        )
+        self.assertEqual(config["ENGINE"], "django.db.backends.postgresql")
+        self.assertEqual(config["NAME"], "pscdb")
+        self.assertEqual(config["USER"], "user")
+        self.assertEqual(config["PASSWORD"], "secret")
+        self.assertEqual(config["HOST"], "ep-x-1.eu-central-1.aws.neon.tech")
+
+    def test_a_password_with_special_characters_is_decoded(self):
+        """Une URL encode @ et / : les laisser tels quels casserait la connexion."""
+        config = self._parse("postgresql://u:a%40b%2Fc@host/db")
+        self.assertEqual(config["PASSWORD"], "a@b/c")
+
+    def test_tls_is_required_even_when_the_url_says_nothing(self):
+        self.assertEqual(self._parse("postgresql://u:p@host/db")["OPTIONS"]["sslmode"], "require")
+
+    def test_an_explicit_sslmode_wins(self):
+        config = self._parse("postgresql://u:p@host/db?sslmode=verify-full")
+        self.assertEqual(config["OPTIONS"]["sslmode"], "verify-full")
+
+    def test_the_port_is_kept_when_given(self):
+        self.assertEqual(self._parse("postgresql://u:p@host:5433/db")["PORT"], "5433")
+
+    def test_the_connection_is_reused_between_requests(self):
+        self.assertGreater(self._parse("postgresql://u:p@host/db")["CONN_MAX_AGE"], 0)
+        self.assertTrue(self._parse("postgresql://u:p@host/db")["CONN_HEALTH_CHECKS"])
+
+    def test_without_the_variable_the_project_stays_on_sqlite(self):
+        from django.conf import settings
+
+        self.assertEqual(settings.DATABASES["default"]["ENGINE"], "django.db.backends.sqlite3")
