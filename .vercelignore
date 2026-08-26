@@ -1,0 +1,29 @@
+# Ce qui ne doit jamais partir sur la plateforme.
+# La CLI envoie le répertoire courant : ce fichier est la seule barrière.
+
+# Secrets et configuration locale. Le .env contient la clé et le mot de passe
+# de développement : il n'a rien à faire en ligne.
+.env
+.env.local
+.env.*
+
+# Base locale et sortie de collectstatic, régénérées côté plateforme.
+data/
+staticfiles/
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+
+# Environnements virtuels : plusieurs centaines de mégaoctets inutiles.
+.venv/
+venv/
+
+# Historique et outillage.
+.git/
+.ruff_cache/
+__pycache__/
+*.py[cod]
+
+# Tests et documentation : sans usage à l'exécution.
+psc/*/tests/
+docs/
