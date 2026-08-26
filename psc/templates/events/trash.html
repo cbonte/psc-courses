@@ -10,11 +10,11 @@
   <div class="psc-edition-list">
     {% for edition in editions %}
       <article class="psc-edition is-removed" id="edition-{{ edition.pk }}">
-        <div class="psc-date" aria-hidden="true">
+        <div class="psc-edition-date" aria-hidden="true">
           <span class="psc-date-day">{{ edition.date_start|date:"j" }}</span>
           <span class="psc-date-month">{{ edition.date_start|date:"M" }}</span>
         </div>
-        <div class="psc-edition-main">
+        <div class="psc-edition-body">
           <h3 class="psc-edition-title">{{ edition.event.name }} {{ edition.year }}</h3>
           <p class="psc-edition-meta">
             <span>{% date_range edition %}</span>
@@ -22,7 +22,7 @@
             <span>supprimée le {{ edition.deleted_at|date:"j F Y à H:i" }}{% if edition.deleted_by %} par {{ edition.deleted_by.first_name }}{% endif %}</span>
           </p>
         </div>
-        <div class="psc-edition-side">
+        <div class="psc-edition-cta">
           <button class="btn btn-sm btn-psc" type="button"
                   hx-post="{% url 'events:edition_restore' edition.pk %}"
                   hx-target="#edition-{{ edition.pk }}" hx-swap="outerHTML">Restaurer</button>

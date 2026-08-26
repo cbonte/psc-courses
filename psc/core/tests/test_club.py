@@ -130,16 +130,35 @@ class NewsScreenTests(PscTestCase):
         )
         self.assertContains(self.client.get(reverse("events:dashboard")), "Info")
 
-    def test_html_in_an_announcement_is_escaped(self):
+    def test_dangerous_html_in_an_announcement_is_stripped(self):
         News.objects.create(
             title="Attention",
-            body="<script>alert(1)</script>",
+            body="<p>Bonjour</p><script>alert(1)</script>",
+            published_at=timezone.now(),
+            is_published=True,
+        )
+        # La page porte ses propres scripts : on n'inspecte que le bloc annonce.
+        body = self.client.get(reverse("events:dashboard")).content.decode()
+        block = body[body.index('class="psc-news"'):]
+        block = block[: block.index("</div>\n</div>")] if "</div>\n</div>" in block else block[:2000]
+        self.assertNotIn("<script", block)
+        self.assertNotIn("alert(1)", block)
+        self.assertIn("<p>Bonjour</p>", block)
+
+    def test_formatting_survives_in_an_announcement(self):
+        News.objects.create(
+            title="Sortie",
+            body="<p><strong>Dimanche</strong></p><ul><li>8h au parc</li></ul>",
             published_at=timezone.now(),
             is_published=True,
         )
         response = self.client.get(reverse("events:dashboard"))
-        self.assertNotContains(response, "<script>alert(1)</script>")
-        self.assertContains(response, "&lt;script&gt;")
+        self.assertContains(response, "<strong>Dimanche</strong>")
+        self.assertContains(response, "<li>8h au parc</li>")
+
+    def test_the_editor_is_offered_on_the_announcement_form(self):
+        response = self.client.get(reverse("core:news"))
+        self.assertContains(response, 'data-rich="1"')
 
     def test_removing_an_announcement_keeps_it(self):
         entry = News.objects.create(
@@ -254,8 +273,18 @@ class NamedActionsTests(PscTestCase):
 
     def test_the_calendar_spells_out_its_actions(self):
         response = self.client.get(self.calendar)
-        for label in ("Modifier", "Évaluer", "Mon agenda", "Supprimer"):
-            self.assertContains(response, f">{label}<", msg_prefix=label)
+        for label in ("Modifier", "Mon agenda", "Chercher des informations", "Supprimer"):
+            self.assertContains(response, label, msg_prefix=label)
+
+    def test_every_action_carries_an_icon(self):
+        response = self.client.get(self.calendar)
+        body = response.content.decode()
+        foot = body[body.index('class="psc-edition-foot"'):]
+        foot = foot[: foot.index("</p>")]
+        # Une action nommée, précédée de son icône : ni menu caché, ni icône seule.
+        # « psc-action-danger » contient « psc-action » : on compte l'ouverture
+        # d'attribut, qui n'apparaît qu'une fois par élément.
+        self.assertEqual(foot.count("psc-icon"), foot.count('class="psc-action'))
 
     def test_no_hidden_menu_remains_on_the_cards(self):
         response = self.client.get(self.calendar)

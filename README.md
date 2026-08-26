@@ -38,7 +38,8 @@ définitive accessible aux visiteurs.
 
 **Django réduit à ce qui sert.** Un seul moteur de gabarits, SQLite, ni API ni
 couche REST, ni `contrib.admin` ni `contrib.auth`, Bootstrap 5 et HTMX côté
-navigateur. Une seule dépendance : Django.
+navigateur. Deux dépendances : Django, et nh3 pour assainir le HTML saisi dans
+l'éditeur de texte riche.
 
 ## Démarrer
 

@@ -1,1 +1,4 @@
 Django==6.1
+# Assainissement du HTML saisi par les membres dans l'éditeur de texte riche.
+# Indispensable : écrire soi-même un filtre HTML est une faille annoncée.
+nh3==0.3.7

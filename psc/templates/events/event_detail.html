@@ -1,12 +1,14 @@
 {% extends "base.html" %}
-{% load psc %}
+{% load psc rich %}
 {% block title %}{{ event.name }}{% endblock %}
 {% block og_type %}article{% endblock %}
 {% block og_title %}{{ event.name }}{% endblock %}
-{% block og_description %}{{ event.description|default:event.name|truncatechars:180 }}{% endblock %}
-{% block description %}{{ event.description|default:event.name|truncatechars:180 }}{% endblock %}
+{% block og_description %}{{ event.description|rich_text:180|default:event.name }}{% endblock %}
+{% block description %}{{ event.description|rich_text:180|default:event.name }}{% endblock %}
 
 {% block content %}
+{% include "partials/_back.html" with url=back_url label=back_label %}
+
 <div class="psc-page-head">
   <div>
     <p class="psc-eyebrow">
@@ -31,7 +33,7 @@
 <div id="edition-form"></div>
 
 {% if event.description %}
-  <div class="psc-card mb-4"><p class="mb-0">{{ event.description|linebreaksbr }}</p></div>
+  <div class="psc-card mb-4 psc-rich">{{ event.description|rich }}</div>
 {% endif %}
 
 {% for edition in editions %}
@@ -62,7 +64,7 @@
       </div>
     </div>
 
-    {% if edition.description %}<p class="mt-3">{{ edition.description|linebreaksbr }}</p>{% endif %}
+    {% if edition.description %}<div class="mt-3 psc-rich">{{ edition.description|rich }}</div>{% endif %}
 
     {% if edition.formats.all %}
       <h3 class="psc-subhead">Formats</h3>
@@ -89,7 +91,7 @@
       </ul>
     {% endif %}
 
-    {% if edition.is_past %}
+    {% if edition.can_be_reviewed %}
       <h3 class="psc-subhead">Évaluations</h3>
       {% include "events/_feedback_list.html" with feedbacks=edition.feedbacks.all %}
       <a class="btn btn-sm psc-btn-quiet mt-2" href="{% url 'events:feedback' edition.pk %}">

@@ -128,7 +128,7 @@ class News(SoftDeleteModel, TimestampedModel):
     title = models.CharField("titre", max_length=160)
     body = models.TextField(
         "message",
-        help_text="Texte simple. Les sauts de ligne sont conservés, le HTML est échappé.",
+        help_text="Texte riche : gras, italique, listes et liens. Assaini à l'enregistrement.",
     )
     published_at = models.DateTimeField("publiée le")
     is_published = models.BooleanField("visible", default=True)

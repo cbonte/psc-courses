@@ -251,6 +251,10 @@ def event_detail(request, slug):
         "events/event_detail.html",
         {
             "event": event,
+            "back_url": reverse("events:calendar_year", args=[editions[0].year])
+            if editions
+            else reverse("events:calendar"),
+            "back_label": f"Calendrier {editions[0].year}" if editions else "Calendrier",
             "editions": editions,
             "my_participations": _my_edition_ids(request, editions),
             "today": timezone.localdate(),
@@ -333,6 +337,15 @@ def feedback_form(request, pk):
     edition = get_object_or_404(
         EventEdition.objects.select_related("event", "event__discipline"), pk=pk
     )
+    # Une course qui n'a pas eu lieu ne s'évalue pas.
+    if not edition.can_be_reviewed:
+        return render(
+            request,
+            "events/feedback_too_early.html",
+            {"edition": edition},
+            status=403,
+        )
+
     member = _member_or_none(request)
     if member is None:
         return render(
@@ -546,7 +559,7 @@ def edition_edit(request, pk):
             "return_to": back,
             "action": reverse("events:edition_edit", args=[edition.pk]),
             "cancel_url": back or reverse("events:edition_card", args=[edition.pk]),
-            "title": f"Modifier {edition.event.name}",
+            "title": f"Modifier l'édition {edition.year}",
             "submit_label": "Enregistrer",
             "suggestions": Event.objects.order_by("name").values_list("name", flat=True),
         },
@@ -674,7 +687,7 @@ def prediction_adjust(request, pk, year):
             "form": form,
             "action": reverse("events:prediction_adjust", args=[source.pk, year]),
             "cancel_url": reverse("events:calendar_year", args=[year]),
-            "title": f"{source.event.name} en {year}",
+            "title": f"Une autre date pour {year}",
             "submit_label": "Confirmer cette date",
             "suggestions": Event.objects.order_by("name").values_list("name", flat=True),
             "is_prediction": True,

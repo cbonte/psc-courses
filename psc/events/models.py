@@ -189,6 +189,15 @@ class EventEdition(SoftDeleteModel, TimestampedModel):
         return self.date_end < timezone.localdate()
 
     @property
+    def can_be_reviewed(self):
+        """Évaluable dès le dernier jour : on donne son avis le soir même.
+
+        Distinct de is_past, qui sert au classement dans le calendrier et
+        exige que la course soit terminée depuis la veille.
+        """
+        return self.date_end <= timezone.localdate() and not self.is_canceled
+
+    @property
     def days_until(self):
         return (self.date_start - timezone.localdate()).days
 

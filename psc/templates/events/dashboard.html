@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load psc static %}
+{% load psc rich static %}
 {% block title %}Tableau de bord{% endblock %}
 
 {% block content %}
@@ -18,7 +18,7 @@
     {% for entry in news %}
       <article>
         <h2 class="h6 mb-1">{{ entry.title }}</h2>
-        <p class="mb-1">{{ entry.body|linebreaksbr }}</p>
+        <div class="psc-rich psc-rich-tight mb-1">{{ entry.body|rich }}</div>
         <p class="psc-muted mb-0">{{ entry.published_at|date:"j F Y" }}</p>
       </article>
     {% endfor %}
@@ -90,7 +90,7 @@
         {% for feedback in recent_feedbacks %}
           <blockquote class="psc-quote">
             <p class="mb-1">{% rating feedback.average_score %}</p>
-            {% if feedback.comment %}<p class="mb-1">{{ feedback.comment|truncatechars:120 }}</p>{% endif %}
+            {% if feedback.comment %}<p class="mb-1">{{ feedback.comment|rich_text:120 }}</p>{% endif %}
             <footer>
               {{ feedback.member.first_name }} sur
               <a href="{{ feedback.edition.get_absolute_url }}">{{ feedback.edition.event.name }} {{ feedback.edition.year }}</a>

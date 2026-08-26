@@ -3,6 +3,19 @@
    l'identité du club et les composants propres au calendrier. */
 
 :root {
+  /* Bleu natation de la palette du club, assombri pour tenir les contrastes.
+     Le rouge reste l'identité, mais il ne signale plus que le danger. */
+  --psc-primary: #24719e;
+  --psc-primary-strong: #1d6389;
+  --psc-primary-soft: #e6f1f8;
+  /* Action principale : un voile neutre, pas une couleur. L'emphase vient du
+     gras. Teinté encre plutôt que noir pur, pour rester dans la gamme. */
+  --psc-face: rgba(22, 32, 43, .10);
+  --psc-face-strong: rgba(22, 32, 43, .18);
+  /* Le voile seul ne se détache pas assez du fond pour se lire comme un
+     bouton : une bordure à 3:1 lui donne son contour, seuil des éléments
+     d'interface (WCAG 1.4.11). */
+  --psc-face-edge: rgba(22, 32, 43, .52);
   --psc-red: #c62d29;
   --psc-red-strong: #a92320;
   --psc-surface: #ffffff;
@@ -17,6 +30,12 @@
 }
 
 [data-bs-theme="dark"] {
+  --psc-primary: #63b4de;
+  --psc-primary-strong: #7cc3e8;
+  --psc-primary-soft: #16303e;
+  --psc-face: rgba(255, 255, 255, .14);
+  --psc-face-strong: rgba(255, 255, 255, .24);
+  --psc-face-edge: rgba(255, 255, 255, .36);
   --psc-red: #ff7a6b;
   --psc-red-strong: #ff9385;
   --psc-surface: #161f26;
@@ -35,8 +54,8 @@ body {
   font-size: 1rem;
 }
 
-a { color: var(--psc-red); }
-a:hover { color: var(--psc-red-strong); }
+a { color: var(--psc-primary); }
+a:hover { color: var(--psc-primary-strong); }
 
 .psc-icon {
   width: 1em;
@@ -64,19 +83,19 @@ a:hover { color: var(--psc-red-strong); }
 
 .psc-nav .nav-link { color: var(--psc-ink); font-weight: 500; }
 .psc-nav .nav-link.active,
-.psc-nav .nav-link:hover { color: var(--psc-red); }
+.psc-nav .nav-link:hover { color: var(--psc-primary); }
 
 .psc-theme-toggle,
 .psc-identity {
   --bs-btn-color: var(--psc-ink);
   --bs-btn-bg: transparent;
   --bs-btn-border-color: var(--psc-line);
-  --bs-btn-hover-color: var(--psc-red-strong);
-  --bs-btn-hover-bg: var(--psc-accent-soft);
-  --bs-btn-hover-border-color: var(--psc-red);
-  --bs-btn-active-color: var(--psc-red);
-  --bs-btn-active-bg: var(--psc-accent-soft);
-  --bs-btn-active-border-color: var(--psc-red);
+  --bs-btn-hover-color: var(--psc-primary-strong);
+  --bs-btn-hover-bg: var(--psc-primary-soft);
+  --bs-btn-hover-border-color: var(--psc-primary);
+  --bs-btn-active-color: var(--psc-primary);
+  --bs-btn-active-bg: var(--psc-primary-soft);
+  --bs-btn-active-border-color: var(--psc-primary);
 }
 
 [data-bs-theme="light"] .psc-icon-dark,
@@ -89,8 +108,8 @@ a:hover { color: var(--psc-red-strong); }
   width: 1.7rem;
   height: 1.7rem;
   border-radius: 50%;
-  background: var(--psc-accent-soft);
-  color: var(--psc-red);
+  background: var(--psc-primary-soft);
+  color: var(--psc-primary);
   font-size: .72rem;
   font-weight: 700;
   letter-spacing: .02em;
@@ -101,35 +120,96 @@ a:hover { color: var(--psc-red-strong); }
    Passer par les variables de Bootstrap plutôt que surcharger color et
    background : sans --bs-btn-hover-color ni --bs-btn-hover-bg, la règle
    .btn:hover de Bootstrap devient invalide au calcul, et le bouton perd son
-   fond et hérite de la couleur du texte. Il disparaît alors au survol. */
+   fond et hérite de la couleur du texte. Il disparaît alors au survol.
+
+   L'action principale ne porte pas de couleur : un voile translucide sur le
+   fond, et du gras. Une couleur pleine sur « Je participe » ou « Confirmer »
+   se lit comme une alerte, alors que ce sont des gestes ordinaires. */
 
 .btn-psc {
-  --bs-btn-color: var(--psc-on-red);
-  --bs-btn-bg: var(--psc-red);
-  --bs-btn-border-color: var(--psc-red);
-  --bs-btn-hover-color: var(--psc-on-red);
-  --bs-btn-hover-bg: var(--psc-red-strong);
-  --bs-btn-hover-border-color: var(--psc-red-strong);
-  --bs-btn-active-color: var(--psc-on-red);
-  --bs-btn-active-bg: var(--psc-red-strong);
-  --bs-btn-active-border-color: var(--psc-red-strong);
-  --bs-btn-disabled-color: var(--psc-on-red);
-  --bs-btn-disabled-bg: var(--psc-red);
-  --bs-btn-disabled-border-color: var(--psc-red);
-  font-weight: 500;
+  --bs-btn-color: var(--psc-ink);
+  --bs-btn-bg: var(--psc-face);
+  --bs-btn-border-color: var(--psc-face-edge);
+  --bs-btn-hover-color: var(--psc-ink);
+  --bs-btn-hover-bg: var(--psc-face-strong);
+  --bs-btn-hover-border-color: var(--psc-face-edge);
+  --bs-btn-active-color: var(--psc-ink);
+  --bs-btn-active-bg: var(--psc-face-strong);
+  --bs-btn-active-border-color: var(--psc-face-edge);
+  --bs-btn-disabled-color: var(--psc-muted);
+  --bs-btn-disabled-bg: var(--psc-face);
+  --bs-btn-disabled-border-color: var(--psc-face-edge);
+  font-weight: 700;
 }
 
 .psc-btn-quiet {
   --bs-btn-color: var(--psc-ink);
   --bs-btn-bg: transparent;
   --bs-btn-border-color: var(--psc-line);
-  --bs-btn-hover-color: var(--psc-red-strong);
-  --bs-btn-hover-bg: var(--psc-accent-soft);
-  --bs-btn-hover-border-color: var(--psc-red);
-  --bs-btn-active-color: var(--psc-red);
-  --bs-btn-active-bg: var(--psc-accent-soft);
-  --bs-btn-active-border-color: var(--psc-red);
+  --bs-btn-hover-color: var(--psc-primary-strong);
+  --bs-btn-hover-bg: var(--psc-primary-soft);
+  --bs-btn-hover-border-color: var(--psc-primary);
+  --bs-btn-active-color: var(--psc-primary);
+  --bs-btn-active-bg: var(--psc-primary-soft);
+  --bs-btn-active-border-color: var(--psc-primary);
 }
+
+/* ---------- retour ---------- */
+
+.psc-back {
+  display: inline-flex;
+  align-items: center;
+  font-size: .86rem;
+  color: var(--psc-muted);
+  text-decoration: none;
+  margin-bottom: .75rem;
+}
+.psc-back:hover { color: var(--psc-primary); }
+
+/* ---------- texte riche ----------
+   Le contenu vient des membres : la mise en forme reste sobre et bornée. */
+
+.psc-rich > :first-child { margin-top: 0; }
+.psc-rich > :last-child { margin-bottom: 0; }
+.psc-rich p { margin: 0 0 .6rem; }
+.psc-rich ul, .psc-rich ol { margin: 0 0 .6rem; padding-left: 1.3rem; }
+.psc-rich li { margin-bottom: .15rem; }
+.psc-rich h3 { font-size: 1.05rem; font-weight: 600; margin: .8rem 0 .35rem; }
+.psc-rich h4 { font-size: .95rem; font-weight: 600; margin: .7rem 0 .3rem; }
+.psc-rich blockquote {
+  margin: 0 0 .6rem;
+  padding-left: .8rem;
+  border-left: 3px solid var(--psc-line);
+  color: var(--psc-muted);
+}
+.psc-rich-tight p { margin-bottom: .3rem; }
+
+/* ---------- éditeur ---------- */
+
+.psc-editor { margin-bottom: .25rem; }
+.psc-editor .ql-toolbar.ql-snow,
+.psc-editor .ql-container.ql-snow { border-color: var(--psc-line); }
+.psc-editor .ql-toolbar.ql-snow {
+  border-radius: 6px 6px 0 0;
+  background: var(--psc-ground);
+}
+.psc-editor .ql-container.ql-snow {
+  border-radius: 0 0 6px 6px;
+  font-family: inherit;
+  font-size: 1rem;
+}
+.psc-editor .ql-editor { min-height: 7rem; color: var(--psc-ink); }
+.psc-editor .ql-editor.ql-blank::before { color: var(--psc-muted); font-style: normal; }
+.psc-editor .ql-snow .ql-stroke { stroke: var(--psc-ink); }
+.psc-editor .ql-snow .ql-fill { fill: var(--psc-ink); }
+.psc-editor .ql-snow .ql-picker { color: var(--psc-ink); }
+.psc-editor .ql-snow button:hover .ql-stroke,
+.psc-editor .ql-snow button.ql-active .ql-stroke { stroke: var(--psc-primary); }
+.psc-editor .ql-snow button:hover .ql-fill,
+.psc-editor .ql-snow button.ql-active .ql-fill { fill: var(--psc-primary); }
+.psc-editor .ql-snow a { color: var(--psc-primary); }
+.psc-editor .ql-tooltip { background: var(--psc-surface); border-color: var(--psc-line); color: var(--psc-ink); box-shadow: var(--psc-shadow); }
+.psc-editor .ql-tooltip input[type=text] { background: var(--psc-surface); border-color: var(--psc-line); color: var(--psc-ink); }
 
 /* ---------- en-tête de page ---------- */
 
@@ -241,8 +321,8 @@ a:hover { color: var(--psc-red-strong); }
   background: color-mix(in srgb, var(--tone) 12%, transparent);
   font-weight: 500;
 }
-.btn-check:checked + .psc-chip-plain { border-color: var(--psc-red); color: var(--psc-red); background: var(--psc-accent-soft); }
-.btn-check:focus-visible + .psc-chip { outline: 2px solid var(--psc-red); outline-offset: 2px; }
+.btn-check:checked + .psc-chip-plain { border-color: var(--psc-primary); color: var(--psc-primary); background: var(--psc-primary-soft); }
+.btn-check:focus-visible + .psc-chip { outline: 2px solid var(--psc-primary); outline-offset: 2px; }
 
 .psc-filter-actions { display: flex; align-items: center; gap: .75rem; margin-left: auto; }
 
@@ -283,31 +363,44 @@ a:hover { color: var(--psc-red-strong); }
 .psc-edition-list { display: flex; flex-direction: column; gap: .6rem; }
 .psc-edition-list-tight { gap: .4rem; }
 
+/* Grille nommée : la même structure sert au bureau et au téléphone, seule
+   la répartition des zones change. Rien n'est masqué à la petite taille. */
 .psc-edition {
   display: grid;
-  grid-template-columns: 3.2rem 1fr auto;
-  gap: 0 1rem;
-  align-items: center;
+  grid-template-columns: 3.4rem minmax(0, 1fr) auto;
+  grid-template-areas:
+    "date body cta"
+    "foot foot foot"
+    "people people people";
+  gap: .1rem .9rem;
+  align-items: start;
   background: var(--psc-surface);
   border: 1px solid var(--psc-line);
   border-radius: var(--psc-radius);
-  padding: .8rem 1rem;
+  padding: .85rem 1rem .6rem;
   box-shadow: var(--psc-shadow);
 }
+
+.psc-edition-date { grid-area: date; }
+.psc-edition-body { grid-area: body; min-width: 0; }
+.psc-edition-cta  { grid-area: cta; justify-self: end; }
+.psc-edition-foot { grid-area: foot; }
+.psc-edition-people { grid-area: people; }
 
 .psc-edition.is-provisional { border-style: dashed; }
 .psc-edition.is-canceled { opacity: .6; }
 .psc-edition.is-canceled .psc-edition-title a { text-decoration: line-through; }
 
-.psc-date {
+.psc-edition-date {
   text-align: center;
   line-height: 1;
+  margin: .15rem 0 0;
   font-variant-numeric: tabular-nums;
 }
 .psc-date-day { display: block; font-size: 1.5rem; font-weight: 700; letter-spacing: -.03em; }
 .psc-date-month { display: block; font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--psc-muted); }
 
-.psc-edition-tags { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: .2rem; }
+.psc-edition-tags { display: flex; flex-wrap: wrap; gap: .35rem; margin: 0 0 .15rem; }
 
 .psc-badge {
   --tone: var(--psc-muted);
@@ -333,28 +426,21 @@ a:hover { color: var(--psc-red-strong); }
 
 .psc-edition-title { font-size: 1rem; font-weight: 600; margin: 0; }
 .psc-edition-title a { text-decoration: none; color: var(--psc-ink); }
-.psc-edition-title a:hover { color: var(--psc-red); }
+.psc-edition-title a:hover { color: var(--psc-primary); }
 
-.psc-edit {
-  color: var(--psc-muted);
-  text-decoration: none;
-  font-size: .8em;
-  opacity: .65;
-}
-.psc-edit:hover { color: var(--psc-red); opacity: 1; }
-.psc-edit .psc-icon { margin-right: 0; }
-
+/* Chaque information porte son icône : la ligne se lit en diagonale et se
+   replie proprement sans séparateur orphelin en fin de ligne. */
 .psc-edition-meta {
   font-size: .84rem;
   color: var(--psc-muted);
-  margin: .1rem 0 0;
+  margin: .2rem 0 0;
   display: flex;
   flex-wrap: wrap;
-  gap: .35rem;
-  align-items: center;
+  gap: .1rem .9rem;
 }
-.psc-sep { opacity: .5; }
-.psc-soon { color: var(--psc-red); font-weight: 500; }
+.psc-meta-item { display: inline-flex; align-items: center; white-space: nowrap; }
+.psc-meta-item > .psc-icon { flex: none; }
+.psc-soon { color: var(--psc-primary); font-weight: 500; }
 
 .psc-formats { margin: .35rem 0 0; display: flex; flex-wrap: wrap; gap: .3rem; }
 .psc-format {
@@ -364,6 +450,17 @@ a:hover { color: var(--psc-red-strong); }
   padding: .05rem .4rem;
   color: var(--psc-muted);
 }
+
+.psc-edition-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .3rem 1rem;
+  margin: .6rem 0 0;
+  padding-top: .5rem;
+  border-top: 1px solid var(--psc-line);
+}
+
+.psc-edition-people:not(:empty) { margin-top: .5rem; }
 
 .psc-edition-head {
   display: flex;
@@ -389,6 +486,8 @@ a:hover { color: var(--psc-red-strong); }
 .psc-guess-count { color: var(--psc-muted); }
 
 .psc-edition.is-removed {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "body cta";
   border-style: dashed;
   background: var(--psc-accent-soft);
   align-items: center;
@@ -398,14 +497,9 @@ a:hover { color: var(--psc-red-strong); }
    Un menu replié derrière trois points ne se trouve pas. Les actions sont
    écrites, discrètes mais lisibles, et se replient sur plusieurs lignes. */
 
-.psc-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: .35rem .9rem;
-  margin: .5rem 0 0;
-}
-
 .psc-action {
+  display: inline-flex;
+  align-items: center;
   border: 0;
   background: transparent;
   padding: 0;
@@ -416,7 +510,7 @@ a:hover { color: var(--psc-red-strong); }
   border-bottom: 1px solid transparent;
   cursor: pointer;
 }
-.psc-action:hover { color: var(--psc-red); border-bottom-color: currentColor; }
+.psc-action:hover { color: var(--psc-primary); border-bottom-color: currentColor; }
 .psc-action-danger:hover { color: var(--psc-red); }
 
 /* ---------- écrans du club ---------- */
@@ -436,10 +530,10 @@ a:hover { color: var(--psc-red-strong); }
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
 }
-.psc-subnav a:hover { color: var(--psc-red); }
+.psc-subnav a:hover { color: var(--psc-primary); }
 .psc-subnav a.is-current {
-  color: var(--psc-red);
-  border-bottom-color: var(--psc-red);
+  color: var(--psc-primary);
+  border-bottom-color: var(--psc-primary);
   font-weight: 600;
 }
 
@@ -458,14 +552,14 @@ a:hover { color: var(--psc-red-strong); }
   color: var(--psc-ink);
   box-shadow: var(--psc-shadow);
 }
-.psc-tile:hover { border-color: var(--psc-red); color: var(--psc-ink); }
+.psc-tile:hover { border-color: var(--psc-primary); color: var(--psc-ink); }
 .psc-tile-n {
   display: block;
   font-size: 1.9rem;
   font-weight: 700;
   line-height: 1;
   font-variant-numeric: tabular-nums;
-  color: var(--psc-red);
+  color: var(--psc-primary);
 }
 .psc-tile-l {
   display: block;
@@ -491,7 +585,7 @@ a:hover { color: var(--psc-red-strong); }
 .psc-row-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: .1rem; }
 .psc-row-main > .psc-form-grid { width: 100%; }
 .psc-row-actions { display: flex; align-items: center; gap: .8rem; flex-wrap: wrap; }
-.psc-row-editing { border-color: var(--psc-red); align-items: flex-end; flex-wrap: wrap; }
+.psc-row-editing { border-color: var(--psc-primary); align-items: flex-end; flex-wrap: wrap; }
 .psc-row-muted { opacity: .6; }
 .psc-row-removed { border-style: dashed; background: var(--psc-accent-soft); }
 .psc-row-warn { font-size: .84rem; color: var(--psc-red); margin-top: .3rem; }
@@ -511,15 +605,16 @@ a:hover { color: var(--psc-red-strong); }
   color: var(--psc-muted);
   font: inherit;
   text-decoration: underline dotted;
+  text-underline-offset: 2px;
   cursor: pointer;
 }
-.psc-count-link:hover { color: var(--psc-red); }
+.psc-count-link:hover { color: var(--psc-primary); }
 
 /* ---------- formulaire d'épreuve ---------- */
 
 .psc-edition-form {
   background: var(--psc-surface);
-  border: 1px solid var(--psc-red);
+  border: 1px solid var(--psc-primary);
   border-radius: var(--psc-radius);
   padding: 1.1rem 1.25rem 1.25rem;
   margin-bottom: .6rem;
@@ -543,7 +638,7 @@ a:hover { color: var(--psc-red-strong); }
   cursor: pointer;
   padding: 0 .25rem;
 }
-.psc-close:hover { color: var(--psc-red); }
+.psc-close:hover { color: var(--psc-primary); }
 
 .psc-field { margin-bottom: .85rem; }
 .psc-field .form-text { font-size: .8rem; color: var(--psc-muted); }
@@ -632,7 +727,7 @@ a:hover { color: var(--psc-red-strong); }
 
 .psc-news { display: grid; gap: .75rem; margin-bottom: 1.5rem; }
 .psc-news article {
-  background: var(--psc-accent-soft);
+  background: var(--psc-primary-soft);
   border-radius: var(--psc-radius);
   padding: .9rem 1.1rem;
 }
@@ -681,8 +776,8 @@ a:hover { color: var(--psc-red-strong); }
   cursor: pointer;
   font-variant-numeric: tabular-nums;
 }
-.btn-check:checked + .psc-score-btn { background: var(--psc-red); border-color: var(--psc-red); color: #fff; font-weight: 600; }
-.btn-check:focus-visible + .psc-score-btn { outline: 2px solid var(--psc-red); outline-offset: 2px; }
+.btn-check:checked + .psc-score-btn { background: var(--psc-primary); border-color: var(--psc-primary); color: #fff; font-weight: 600; }
+.btn-check:focus-visible + .psc-score-btn { outline: 2px solid var(--psc-primary); outline-offset: 2px; }
 
 /* ---------- sélection de membre ---------- */
 
@@ -699,7 +794,7 @@ a:hover { color: var(--psc-red-strong); }
   font-size: .9rem;
   cursor: pointer;
 }
-.psc-member-chip:hover { border-color: var(--psc-red); color: var(--psc-red); }
+.psc-member-chip:hover { border-color: var(--psc-primary); color: var(--psc-primary); }
 .psc-summary { cursor: pointer; font-size: .9rem; color: var(--psc-muted); }
 
 /* ---------- graphique ---------- */
@@ -722,17 +817,35 @@ a:hover { color: var(--psc-red-strong); }
 
 @media (max-width: 640px) {
   .psc-edition {
-    grid-template-columns: 2.8rem 1fr;
-    row-gap: .6rem;
+    grid-template-columns: 2.9rem minmax(0, 1fr);
+    grid-template-areas:
+      "date body"
+      "cta  cta"
+      "foot foot"
+      "people people";
+    column-gap: .7rem;
   }
-  .psc-edition-side { grid-column: 1 / -1; }
-  .psc-participation { justify-content: flex-start; }
+  .psc-edition-cta { justify-self: stretch; margin-top: .6rem; }
+  .psc-edition-cta .psc-participation { justify-content: flex-start; }
+  .psc-edition-cta .psc-join { width: 100%; }
+  .psc-edition-cta .psc-join .form-select { flex: 1 1 8rem; }
+  .psc-date-day { font-size: 1.3rem; }
+  .psc-edition-meta { gap: .1rem .7rem; }
   .psc-month-title { top: 3.4rem; }
   .psc-filter-actions { margin-left: 0; }
+  .psc-row { flex-wrap: wrap; }
+  .psc-row-actions { width: 100%; justify-content: flex-end; }
+}
+
+/* Sous 380 px, les libellés d'action prennent trop de place sur une ligne :
+   on les laisse passer à la ligne plutôt que de les tronquer ou de les
+   cacher derrière un menu. */
+@media (max-width: 380px) {
+  .psc-edition-foot { gap: .35rem .75rem; font-size: .8rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
 }
 
-:focus-visible { outline: 2px solid var(--psc-red); outline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--psc-primary); outline-offset: 2px; }

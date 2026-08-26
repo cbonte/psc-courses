@@ -1,4 +1,5 @@
 import datetime
+import html as html_module
 import re
 
 from django.urls import reverse
@@ -192,7 +193,8 @@ class FeedbackTests(PscTestCase):
         )
         self.assertEqual(response.status_code, 302)
         feedback = Feedback.objects.get()
-        self.assertEqual(feedback.comment, "Très bonne organisation.")
+        # Le commentaire est stocké en HTML assaini, pas en texte brut.
+        self.assertIn("Très bonne organisation.", feedback.comment)
         self.assertEqual(feedback.average_score(), 4)
 
     def test_an_empty_submission_is_refused(self):
@@ -356,11 +358,63 @@ class EditionEditingTests(PscTestCase):
         data.update(overrides)
         return data
 
+    @staticmethod
+    def _field_value(html, name):
+        """Valeur réellement portée par le champ, pas par la page.
+
+        Le formulaire embarque une liste de suggestions de noms de course :
+        chercher le nom dans la page entière donnait un faux positif, et
+        masquait un formulaire complètement vide.
+        """
+        tag = re.search(r"<input[^>]*name=\"" + name + r"\"[^>]*>", html)
+        if not tag:
+            return None
+        value = re.search(r'value="([^"]*)"', tag.group(0))
+        return value.group(1) if value else None
+
+    @staticmethod
+    def _textarea_value(html, name):
+        found = re.search(
+            r"<textarea[^>]*name=\"" + name + r"\"[^>]*>(.*?)</textarea>", html, re.S
+        )
+        # Le contenu d'un textarea est échappé dans la source : c'est correct,
+        # le navigateur restitue le texte d'origine.
+        return html_module.unescape(found.group(1).strip()) if found else None
+
     def test_the_form_opens_prefilled(self):
         self.declare(self.member)
-        response = self.client.get(reverse("events:edition_edit", args=[self.edition.pk]))
-        self.assertContains(response, self.edition.event.name)
-        self.assertContains(response, "1,5 / 40 / 10 km")
+        html = self.client.get(
+            reverse("events:edition_edit", args=[self.edition.pk])
+        ).content.decode()
+        self.assertEqual(self._field_value(html, "name"), self.edition.event.name)
+        self.assertEqual(
+            self._field_value(html, "date_start"), self.edition.date_start.isoformat()
+        )
+        self.assertEqual(self._textarea_value(html, "formats"), "M | 1,5 / 40 / 10 km")
+
+    def test_the_form_carries_the_place_and_the_description(self):
+        self.declare(self.member)
+        self.edition.event.city = "Deauville"
+        self.edition.event.department = "14"
+        self.edition.event.save()
+        self.edition.description = "<p>Départ <strong>8h</strong></p>"
+        self.edition.save()
+        html = self.client.get(
+            reverse("events:edition_edit", args=[self.edition.pk])
+        ).content.decode()
+        self.assertEqual(self._field_value(html, "city"), "Deauville")
+        self.assertEqual(self._field_value(html, "department"), "14")
+        self.assertIn("<strong>8h</strong>", self._textarea_value(html, "description"))
+
+    def test_the_selected_status_is_the_one_stored(self):
+        self.declare(self.member)
+        self.edition.status = EventEdition.Status.PROVISIONAL
+        self.edition.save()
+        html = self.client.get(
+            reverse("events:edition_edit", args=[self.edition.pk])
+        ).content.decode()
+        checked = re.search(r'<input[^>]*value="provisional"[^>]*checked[^>]*>', html)
+        self.assertIsNotNone(checked, "Le statut enregistré n'est pas présélectionné.")
 
     def test_saving_updates_the_edition_and_returns_the_card(self):
         self.declare(self.member)
@@ -647,3 +701,153 @@ class ReturnToTests(PscTestCase):
         )
         self.assertEqual(response.status_code, 204)
         self.assertEqual(response["HX-Redirect"], self.detail)
+
+
+class FeedbackTimingTests(PscTestCase):
+    """On n'évalue que ce qui a eu lieu."""
+
+    def setUp(self):
+        super().setUp()
+        self.member = self.make_member()
+        self.declare(self.member)
+        self.criterion = self.make_criterion()
+        self.future = self.make_edition(event=self.make_event("Course à venir"))
+        self.past = self.make_edition(
+            event=self.make_event("Course passée"),
+            start=datetime.date.today() - datetime.timedelta(days=10),
+        )
+
+    def test_a_future_race_cannot_be_evaluated(self):
+        response = self.client.get(reverse("events:feedback", args=[self.future.pk]))
+        self.assertEqual(response.status_code, 403)
+        self.assertContains(response, "n'a pas encore eu lieu", status_code=403)
+
+    def test_submitting_on_a_future_race_is_refused(self):
+        response = self.client.post(
+            reverse("events:feedback", args=[self.future.pk]),
+            {"comment": "En avance", f"criterion_{self.criterion.pk}": "5"},
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(Feedback.objects.exists())
+
+    def test_a_past_race_can_be_evaluated(self):
+        self.assertEqual(
+            self.client.get(reverse("events:feedback", args=[self.past.pk])).status_code, 200
+        )
+
+    def test_the_calendar_only_offers_it_on_past_races(self):
+        response = self.client.get(
+            reverse("events:calendar_year", args=[self.future.date_start.year])
+        )
+        body = response.content.decode()
+        future_card = body[body.index(f'id="edition-{self.future.pk}"'):]
+        future_card = future_card[: future_card.index("</article>")]
+        self.assertNotIn("Évaluer", future_card)
+
+    def test_a_race_run_today_can_already_be_evaluated(self):
+        today = self.make_edition(
+            event=self.make_event("Course du jour"), start=datetime.date.today()
+        )
+        self.assertEqual(
+            self.client.get(reverse("events:feedback", args=[today.pk])).status_code, 200
+        )
+
+
+class RichTextTests(PscTestCase):
+    def setUp(self):
+        super().setUp()
+        self.member = self.make_member()
+        self.declare(self.member)
+        self.edition = self.make_edition(
+            start=datetime.date.today() - datetime.timedelta(days=5)
+        )
+        self.criterion = self.make_criterion()
+
+    def test_the_description_keeps_its_formatting(self):
+        self.client.post(
+            reverse("events:edition_edit", args=[self.edition.pk]),
+            {
+                "name": self.edition.event.name,
+                "discipline": self.edition.event.discipline_id,
+                "date_start": self.edition.date_start.isoformat(),
+                "date_end": "", "status": "confirmed", "city": "", "department": "",
+                "formats": "", "registration_url": "", "website": "",
+                "description": "<p>Départ <strong>8h</strong></p><ul><li>Vestiaires</li></ul>",
+            },
+        )
+        self.edition.refresh_from_db()
+        self.assertIn("<strong>8h</strong>", self.edition.description)
+        self.assertIn("<li>Vestiaires</li>", self.edition.description)
+
+    def test_a_script_in_the_description_is_stripped(self):
+        self.client.post(
+            reverse("events:edition_edit", args=[self.edition.pk]),
+            {
+                "name": self.edition.event.name,
+                "discipline": self.edition.event.discipline_id,
+                "date_start": self.edition.date_start.isoformat(),
+                "date_end": "", "status": "confirmed", "city": "", "department": "",
+                "formats": "", "registration_url": "", "website": "",
+                "description": "<p>ok</p><script>alert(1)</script>",
+            },
+        )
+        self.edition.refresh_from_db()
+        self.assertNotIn("script", self.edition.description)
+        self.assertIn("<p>ok</p>", self.edition.description)
+
+    def test_a_comment_written_without_javascript_still_works(self):
+        """Sans éditeur, le textarea envoie du texte brut : il doit survivre."""
+        self.client.post(
+            reverse("events:feedback", args=[self.edition.pk]),
+            {"comment": "Première ligne\nDeuxième ligne", f"criterion_{self.criterion.pk}": "4"},
+        )
+        feedback = Feedback.objects.get()
+        self.assertIn("Première ligne", feedback.comment)
+        self.assertIn("<br>", feedback.comment)
+
+    def test_the_editor_is_offered_on_the_edition_form(self):
+        response = self.client.get(reverse("events:edition_edit", args=[self.edition.pk]))
+        self.assertContains(response, 'data-rich="1"')
+
+    def test_the_ical_feed_carries_text_not_markup(self):
+        self.edition.description = "<p>Départ <strong>8h</strong></p>"
+        self.edition.save()
+        body = self.client.get(reverse("events:edition_ics", args=[self.edition.pk]))
+        content = body.content.decode()
+        self.assertIn("Départ 8h", content)
+        self.assertNotIn("<strong>", content)
+
+
+class NavigationTests(PscTestCase):
+    def setUp(self):
+        super().setUp()
+        self.edition = self.make_edition(
+            start=datetime.date.today() - datetime.timedelta(days=3)
+        )
+        self.event = self.edition.event
+
+    def test_the_event_page_offers_a_way_back_to_the_calendar(self):
+        response = self.client.get(self.event.get_absolute_url())
+        self.assertContains(response, "psc-back")
+        self.assertContains(
+            response, reverse("events:calendar_year", args=[self.edition.year])
+        )
+
+    def test_the_evaluation_page_offers_a_way_back_to_the_race(self):
+        self.declare(self.make_member())
+        response = self.client.get(reverse("events:feedback", args=[self.edition.pk]))
+        self.assertContains(response, "psc-back")
+        self.assertContains(response, self.event.get_absolute_url())
+
+    def test_the_edit_form_does_not_repeat_the_name_it_already_shows(self):
+        self.declare(self.make_member())
+        response = self.client.get(reverse("events:edition_edit", args=[self.edition.pk]))
+        body = response.content.decode()
+        heading = body[body.index("psc-card-title"):]
+        heading = heading[: heading.index("</h2>")]
+        self.assertNotIn(self.event.name, heading)
+        # Le nom reste modifiable, dans son champ. On inspecte le champ, pas la
+        # page : la liste de suggestions contient elle aussi ce nom.
+        tag = re.search(r'<input[^>]*name="name"[^>]*>', body)
+        self.assertIsNotNone(tag)
+        self.assertIn(f'value="{self.event.name}"', tag.group(0))

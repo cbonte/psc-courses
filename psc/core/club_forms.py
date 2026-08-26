@@ -7,6 +7,7 @@ dans l'application, sans rôle et sans deuxième interface à apprendre.
 from django import forms
 
 from core.models import Member, News
+from core.richfields import RichTextField
 from events.models import Discipline, FeedbackCriterion
 
 TEXT = {"class": "form-control"}
@@ -42,12 +43,13 @@ class FeedbackCriterionForm(forms.ModelForm):
 
 
 class NewsForm(forms.ModelForm):
+    body = RichTextField(label="Message", rows=5, required=True)
+
     class Meta:
         model = News
         fields = ["title", "body", "published_at", "is_published"]
         widgets = {
             "title": forms.TextInput(attrs=TEXT),
-            "body": forms.Textarea(attrs={**TEXT, "rows": 4}),
             "published_at": forms.DateTimeInput(
                 attrs={**TEXT, "type": "datetime-local"}, format="%Y-%m-%dT%H:%M"
             ),

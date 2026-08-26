@@ -1,8 +1,8 @@
 <article class="psc-edition is-removed" id="prediction-{{ source.pk }}" role="status">
-  <div class="psc-edition-main">
+  <div class="psc-edition-body">
     <p class="mb-0"><strong>{{ event.name }}</strong> n'est plus proposée pour {{ year }}.</p>
   </div>
-  <div class="psc-edition-side">
+  <div class="psc-edition-cta">
     <button class="btn btn-sm psc-btn-quiet" type="button"
             hx-post="{% url 'events:prediction_restore' source.pk year %}"
             hx-target="#prediction-{{ source.pk }}" hx-swap="outerHTML">Remettre</button>

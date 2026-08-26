@@ -1,8 +1,9 @@
+{% load rich %}
 <div class="psc-row" id="news-{{ object.pk }}">
   <div class="psc-row-main">
     <strong>{{ object.title }}</strong>
     <span class="psc-muted small">{{ object.published_at|date:"j F Y à H:i" }}{% if not object.is_published %} · masquée{% endif %}</span>
-    <p class="mb-0 small">{{ object.body|truncatechars:180 }}</p>
+    <p class="mb-0 small">{{ object.body|rich_text:180 }}</p>
   </div>
   <div class="psc-row-actions">
     <button type="button" class="psc-action"

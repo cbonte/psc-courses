@@ -3,9 +3,11 @@
 {% block title %}Évaluer {{ edition.event.name }}{% endblock %}
 
 {% block content %}
+{% include "partials/_back.html" with url=edition.event.get_absolute_url label=edition.event.name %}
+
 <div class="psc-page-head">
   <div>
-    <p class="psc-eyebrow"><a href="{{ edition.event.get_absolute_url }}">{{ edition.event.name }}</a></p>
+    <p class="psc-eyebrow">{{ edition.event.name }}</p>
     <h1 class="psc-title">Évaluation {{ edition.year }}</h1>
   </div>
 </div>

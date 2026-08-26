@@ -8,6 +8,8 @@ import datetime
 
 from django.utils import timezone
 
+from core.richtext import to_text
+
 PRODID = "-//Paris Sport Club//Calendrier des courses//FR"
 ONE_DAY = datetime.timedelta(days=1)
 
@@ -59,7 +61,7 @@ def build_calendar(editions, name="Calendrier PSC", site_url=""):
         summary = edition.event.name
         if edition.status == edition.Status.PROVISIONAL:
             summary = f"[à confirmer] {summary}"
-        description = edition.description or edition.event.description
+        description = to_text(edition.description or edition.event.description)
         lines += [
             "BEGIN:VEVENT",
             f"UID:edition-{edition.pk}@paris-sport-club",

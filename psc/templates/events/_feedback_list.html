@@ -1,10 +1,10 @@
-{% load psc %}
+{% load psc rich %}
 {% if feedbacks %}
   <div class="psc-feedbacks">
     {% for feedback in feedbacks %}
       <blockquote class="psc-quote">
         <p class="mb-1">{% rating feedback.average_score %}</p>
-        {% if feedback.comment %}<p class="mb-1">{{ feedback.comment|linebreaksbr }}</p>{% endif %}
+        {% if feedback.comment %}<div class="psc-rich mb-1">{{ feedback.comment|rich }}</div>{% endif %}
         {% if detailed and feedback.scores.all %}
           <ul class="psc-score-detail">
             {% for score in feedback.scores.all %}<li>{{ score.criterion.label }} <strong>{{ score.score }}/5</strong></li>{% endfor %}

@@ -2,35 +2,31 @@
 {% if edition.is_prediction %}
 {# Une proposition : elle n'existe pas encore en base. #}
 <article class="psc-edition is-prediction" id="prediction-{{ edition.source.pk }}">
-  <div class="psc-date" aria-hidden="true">
+  <p class="psc-edition-date" aria-hidden="true">
     <span class="psc-date-day">{{ edition.date_start|date:"j" }}</span>
     <span class="psc-date-month">{{ edition.date_start|date:"M" }}</span>
-  </div>
-  <div class="psc-edition-main">
-    <div class="psc-edition-tags">
+  </p>
+
+  <div class="psc-edition-body">
+    <p class="psc-edition-tags">
       <span class="psc-badge" style="--tone: {{ edition.event.discipline.color }}; color: {{ edition.event.discipline.color|contrast_on }}">{{ edition.event.discipline.label }}</span>
       <span class="psc-flag psc-flag-guess">Proposition</span>
-    </div>
+    </p>
     <h3 class="psc-edition-title"><a href="{{ edition.get_absolute_url }}">{{ edition.event.name }}</a></h3>
     <p class="psc-edition-meta">
-      <span>Attendue d'après l'édition {{ edition.source.year }}, un {{ edition.source.date_start|date:"l" }}</span>
+      <span class="psc-meta-item">
+        <svg class="psc-icon" aria-hidden="true"><use href="#i-clock"/></svg>
+        Attendue d'après {{ edition.source.year }}, un {{ edition.source.date_start|date:"l" }}
+      </span>
       {% if edition.event.location %}
-        <span class="psc-sep">·</span>
-        <span><svg class="psc-icon" aria-hidden="true"><use href="#i-pin"/></svg>{{ edition.event.location }}</span>
+        <span class="psc-meta-item">
+          <svg class="psc-icon" aria-hidden="true"><use href="#i-pin"/></svg>{{ edition.event.location }}
+        </span>
       {% endif %}
     </p>
-    <p class="psc-actions">
-      <button type="button" class="psc-action"
-              hx-get="{% url 'events:prediction_adjust' edition.source.pk edition.date_start.year %}"
-              hx-target="#prediction-{{ edition.source.pk }}" hx-swap="outerHTML">Une autre date</button>
-      <a class="psc-action" href="https://duckduckgo.com/?q={{ edition.event.name|urlencode }}"
-         target="_blank" rel="noopener noreferrer">Chercher des informations</a>
-      <button type="button" class="psc-action psc-action-danger"
-              hx-post="{% url 'events:prediction_dismiss' edition.source.pk edition.date_start.year %}"
-              hx-target="#prediction-{{ edition.source.pk }}" hx-swap="outerHTML">Pas cette année</button>
-    </p>
   </div>
-  <div class="psc-edition-side">
+
+  <div class="psc-edition-cta">
     <form hx-post="{% url 'events:prediction_confirm' edition.source.pk edition.date_start.year %}"
           hx-target="#prediction-{{ edition.source.pk }}" hx-swap="outerHTML">
       <button type="submit" class="btn btn-sm btn-psc">
@@ -39,31 +35,55 @@
       </button>
     </form>
   </div>
+
+  <p class="psc-edition-foot">
+    <button type="button" class="psc-action"
+            hx-get="{% url 'events:prediction_adjust' edition.source.pk edition.date_start.year %}"
+            hx-target="#prediction-{{ edition.source.pk }}" hx-swap="outerHTML">
+      <svg class="psc-icon" aria-hidden="true"><use href="#i-calendar"/></svg>Une autre date
+    </button>
+    <a class="psc-action" href="https://duckduckgo.com/?q={{ edition.event.name|urlencode }}"
+       target="_blank" rel="noopener noreferrer">
+      <svg class="psc-icon" aria-hidden="true"><use href="#i-search"/></svg>Chercher des informations
+    </a>
+    <button type="button" class="psc-action psc-action-danger"
+            hx-post="{% url 'events:prediction_dismiss' edition.source.pk edition.date_start.year %}"
+            hx-target="#prediction-{{ edition.source.pk }}" hx-swap="outerHTML">
+      <svg class="psc-icon" aria-hidden="true"><use href="#i-x"/></svg>Pas cette année
+    </button>
+  </p>
 </article>
 {% else %}
 <article class="psc-edition{% if edition.is_canceled %} is-canceled{% endif %}{% if edition.status == 'provisional' %} is-provisional{% endif %}" id="edition-{{ edition.pk }}">
-  <div class="psc-date" aria-hidden="true">
+  <p class="psc-edition-date" aria-hidden="true">
     <span class="psc-date-day">{{ edition.date_start|date:"j" }}</span>
     <span class="psc-date-month">{{ edition.date_start|date:"M" }}</span>
-  </div>
-  <div class="psc-edition-main">
-    <div class="psc-edition-tags">
+  </p>
+
+  <div class="psc-edition-body">
+    <p class="psc-edition-tags">
       <span class="psc-badge" style="--tone: {{ edition.event.discipline.color }}; color: {{ edition.event.discipline.color|contrast_on }}">{{ edition.event.discipline.label }}</span>
       {% if edition.status == 'provisional' %}<span class="psc-flag">Date à confirmer</span>{% endif %}
       {% if edition.is_canceled %}<span class="psc-flag psc-flag-canceled">Annulée</span>{% endif %}
-    </div>
+    </p>
     <h3 class="psc-edition-title"><a href="{{ edition.get_absolute_url }}">{{ edition.event.name }}</a></h3>
     <p class="psc-edition-meta">
-      <span>{% date_range edition %}</span>
+      <span class="psc-meta-item">
+        <svg class="psc-icon" aria-hidden="true"><use href="#i-calendar"/></svg>{% date_range edition %}
+      </span>
       {% if edition.event.location %}
-        <span class="psc-sep">·</span>
-        <span><svg class="psc-icon" aria-hidden="true"><use href="#i-pin"/></svg>{{ edition.event.location }}</span>
+        <span class="psc-meta-item">
+          <svg class="psc-icon" aria-hidden="true"><use href="#i-pin"/></svg>{{ edition.event.location }}
+        </span>
       {% endif %}
       {% countdown edition as soon %}
-      {% if soon %}<span class="psc-sep">·</span><span class="psc-soon">{{ soon }}</span>{% endif %}
+      {% if soon %}
+        <span class="psc-meta-item psc-soon">
+          <svg class="psc-icon" aria-hidden="true"><use href="#i-clock"/></svg>{{ soon }}
+        </span>
+      {% endif %}
       {% if edition.participation_count %}
-        <span class="psc-sep">·</span>
-        <button type="button" class="psc-count-link"
+        <button type="button" class="psc-meta-item psc-count-link"
                 hx-get="{% url 'events:participants' edition.pk %}"
                 hx-target="#people-{{ edition.pk }}" hx-swap="innerHTML">
           <svg class="psc-icon" aria-hidden="true"><use href="#i-users"/></svg>{{ edition.participation_count }} inscrit{{ edition.participation_count|pluralize }}
@@ -75,23 +95,37 @@
         {% for format in edition.formats.all %}<span class="psc-format">{{ format.name }}{% if format.distance %} <small>{{ format.distance }}</small>{% endif %}</span>{% endfor %}
       </p>
     {% endif %}
-    {# Actions nommées, visibles : un menu caché ne se trouve pas. #}
-    <p class="psc-actions">
-      <button type="button" class="psc-action"
-              hx-get="{% url 'events:edition_edit' edition.pk %}"
-              hx-target="#edition-{{ edition.pk }}" hx-swap="outerHTML">Modifier</button>
-      <a class="psc-action" href="{% url 'events:feedback' edition.pk %}">Évaluer</a>
-      <a class="psc-action" href="{% url 'events:edition_ics' edition.pk %}">Mon agenda</a>
-      <a class="psc-action" href="https://duckduckgo.com/?q={{ edition.event.name|urlencode }}"
-         target="_blank" rel="noopener noreferrer">Chercher des informations</a>
-      <button type="button" class="psc-action psc-action-danger"
-              hx-post="{% url 'events:edition_delete' edition.pk %}"
-              hx-target="#edition-{{ edition.pk }}" hx-swap="outerHTML">Supprimer</button>
-    </p>
-    <div id="people-{{ edition.pk }}"></div>
   </div>
-  <div class="psc-edition-side">
+
+  <div class="psc-edition-cta">
     {% include "events/_participation.html" %}
   </div>
+
+  <p class="psc-edition-foot">
+    <button type="button" class="psc-action"
+            hx-get="{% url 'events:edition_edit' edition.pk %}"
+            hx-target="#edition-{{ edition.pk }}" hx-swap="outerHTML">
+      <svg class="psc-icon" aria-hidden="true"><use href="#i-pencil"/></svg>Modifier
+    </button>
+    {% if edition.can_be_reviewed %}
+      <a class="psc-action" href="{% url 'events:feedback' edition.pk %}">
+        <svg class="psc-icon" aria-hidden="true"><use href="#i-star"/></svg>Évaluer
+      </a>
+    {% endif %}
+    <a class="psc-action" href="{% url 'events:edition_ics' edition.pk %}">
+      <svg class="psc-icon" aria-hidden="true"><use href="#i-calendar"/></svg>Mon agenda
+    </a>
+    <a class="psc-action" href="https://duckduckgo.com/?q={{ edition.event.name|urlencode }}"
+       target="_blank" rel="noopener noreferrer">
+      <svg class="psc-icon" aria-hidden="true"><use href="#i-search"/></svg>Chercher des informations
+    </a>
+    <button type="button" class="psc-action psc-action-danger"
+            hx-post="{% url 'events:edition_delete' edition.pk %}"
+            hx-target="#edition-{{ edition.pk }}" hx-swap="outerHTML">
+      <svg class="psc-icon" aria-hidden="true"><use href="#i-trash"/></svg>Supprimer
+    </button>
+  </p>
+
+  <div class="psc-edition-people" id="people-{{ edition.pk }}"></div>
 </article>
 {% endif %}

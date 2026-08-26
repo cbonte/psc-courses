@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load psc %}
+{% block title %}{{ edition.event.name }}{% endblock %}
+
+{% block content %}
+{% include "partials/_back.html" with url=edition.event.get_absolute_url label=edition.event.name %}
+
+<div class="psc-empty">
+  <h1 class="h5">Cette course n'a pas encore eu lieu</h1>
+  <p>
+    {{ edition.event.name }} se court {% date_range edition %}.
+    On l'évalue à partir du dernier jour de l'épreuve.
+  </p>
+  <a class="btn btn-sm btn-psc" href="{{ edition.get_absolute_url }}">Revenir à la course</a>
+</div>
+{% endblock %}

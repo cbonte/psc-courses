@@ -1,6 +1,7 @@
 from django import forms
 from django.utils.text import slugify
 
+from core.richfields import RichTextField
 from events.models import (
     Discipline,
     Event,
@@ -12,6 +13,10 @@ from events.models import (
 )
 
 SCORE_CHOICES = [(value, f"{value}") for value in range(1, 6)]
+
+# Le navigateur envoie de l'ISO ; la saisie manuelle sans JavaScript peut
+# arriver au format français.
+ISO_AND_FRENCH = ["%Y-%m-%d", "%d/%m/%Y"]
 
 
 class EditionForm(forms.Form):
@@ -41,15 +46,19 @@ class EditionForm(forms.Form):
         queryset=Discipline.objects.all(),
         widget=forms.Select(attrs={"class": "form-select"}),
     )
+    # Un <input type="date"> n'accepte que l'ISO. Sans ce format explicite,
+    # la localisation française rend « 25/09/2026 » et le champ reste vide.
     date_start = forms.DateField(
         label="Date",
-        widget=forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+        input_formats=ISO_AND_FRENCH,
+        widget=forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d"),
     )
     date_end = forms.DateField(
         label="Dernier jour",
         required=False,
         help_text="À remplir seulement si la course dure plusieurs jours.",
-        widget=forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+        input_formats=ISO_AND_FRENCH,
+        widget=forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d"),
     )
     status = forms.ChoiceField(
         label="Statut",
@@ -78,10 +87,10 @@ class EditionForm(forms.Form):
             attrs={"class": "form-control", "rows": 3, "placeholder": "M | 1,5 / 40 / 10 km"}
         ),
     )
-    description = forms.CharField(
+    description = RichTextField(
         label="Description",
-        required=False,
-        widget=forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+        rows=4,
+        placeholder="Parcours, ambiance, conseils… Gras, listes et liens sont possibles.",
     )
     registration_url = forms.URLField(
         label="Lien d'inscription",
@@ -96,11 +105,14 @@ class EditionForm(forms.Form):
         widget=forms.URLInput(attrs={"class": "form-control", "placeholder": "https://"}),
     )
 
-    def __init__(self, *args, edition=None, **kwargs):
+    def __init__(self, data=None, *args, edition=None, **kwargs):
         self.edition = edition
-        if edition is not None and "initial" not in kwargs and not args:
+        # `data` est nommé explicitement : la vue appelle le formulaire avec
+        # `request.POST or None`, donc un None positionnel. Tester la vacuité
+        # de *args laissait croire à une soumission et vidait le formulaire.
+        if edition is not None and data is None and "initial" not in kwargs:
             kwargs["initial"] = self.initial_from(edition)
-        super().__init__(*args, **kwargs)
+        super().__init__(data, *args, **kwargs)
 
     @staticmethod
     def initial_from(edition, date_start=None):
@@ -208,19 +220,16 @@ def sync_formats(edition, text):
 class FeedbackForm(forms.ModelForm):
     """Un commentaire, et une note par critère actif."""
 
+    comment = RichTextField(
+        label="Commentaire",
+        rows=4,
+        placeholder="Organisation, parcours, ambiance… ce qui aiderait les autres "
+        "membres à choisir.",
+    )
+
     class Meta:
         model = Feedback
         fields = ["comment"]
-        widgets = {
-            "comment": forms.Textarea(
-                attrs={
-                    "class": "form-control",
-                    "rows": 4,
-                    "placeholder": "Organisation, parcours, ambiance... ce qui aiderait "
-                    "les autres membres à choisir.",
-                }
-            )
-        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

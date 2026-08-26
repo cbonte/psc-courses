@@ -43,7 +43,9 @@
           <li>
             <a href="{{ participation.edition.get_absolute_url }}">{{ participation.edition.event.name }}</a>
             <span class="psc-muted">{% date_range participation.edition %}</span>
-            <a class="psc-inline-link" href="{% url 'events:feedback' participation.edition.pk %}">évaluer</a>
+            {% if participation.edition.can_be_reviewed %}
+              <a class="psc-inline-link" href="{% url 'events:feedback' participation.edition.pk %}">évaluer</a>
+            {% endif %}
           </li>
         {% endfor %}
       </ul>
