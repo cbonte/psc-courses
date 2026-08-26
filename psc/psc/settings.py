@@ -6,6 +6,7 @@ dépôt (voir `.env.example`). Aucun secret n'est écrit ici.
 """
 
 import os
+import urllib.parse
 from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
@@ -57,6 +58,9 @@ def env_list(name, default=""):
     return [item.strip() for item in os.environ.get(name, default).split(",") if item.strip()]
 
 
+# Vercel expose VERCEL=1 sur ses instances, en construction comme à l'exécution.
+ON_VERCEL = bool(os.environ.get("VERCEL"))
+
 DEBUG = env_bool("PSC_DEBUG", False)
 
 # En développement, une clé fixe évite de déconnecter tout le monde à chaque
@@ -66,6 +70,15 @@ SECRET_KEY = env("PSC_SECRET_KEY", _DEV_SECRET_KEY if DEBUG else None, required=
 
 ALLOWED_HOSTS = env_list("PSC_ALLOWED_HOSTS", "localhost,127.0.0.1,[::1]" if DEBUG else "")
 CSRF_TRUSTED_ORIGINS = env_list("PSC_CSRF_TRUSTED_ORIGINS")
+
+# Les adresses fournies par la plateforme, ajoutées d'office. Celle d'un
+# déploiement de prévisualisation est tirée au sort à chaque fois : sans cela,
+# elle serait rejetée avant même d'atteindre une vue.
+for _variable in ("VERCEL_PROJECT_PRODUCTION_URL", "VERCEL_URL", "VERCEL_BRANCH_URL"):
+    _host = os.environ.get(_variable, "").strip()
+    if _host and _host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(_host)
+        CSRF_TRUSTED_ORIGINS.append(f"https://{_host}")
 
 
 # Applications
@@ -112,8 +125,10 @@ TEMPLATES = [
     },
 ]
 
+# ASGI_APPLICATION n'est lu que par Channels, absent du projet, et sa présence
+# ferait choisir l'entrée ASGI à Vercel. Toutes les vues sont synchrones : on
+# reste en WSGI, sans passer par un pont de threads.
 WSGI_APPLICATION = "psc.wsgi.application"
-ASGI_APPLICATION = "psc.asgi.application"
 
 
 # Base de données
@@ -121,8 +136,41 @@ ASGI_APPLICATION = "psc.asgi.application"
 # SQLite : le volume est de quelques dizaines de courses par an et la sauvegarde
 # se réduit à une copie de fichier.
 
+def _database_from_url(url):
+    """Traduit une DATABASE_URL PostgreSQL en réglage Django.
+
+    Analysée à la main plutôt qu'avec dj-database-url : une douzaine de lignes
+    contre une dépendance de plus, pour un besoin qui ne bougera pas.
+    """
+    parts = urllib.parse.urlparse(url)
+    query = urllib.parse.parse_qs(parts.query)
+    options = {}
+    # Neon n'accepte que le TLS, et refuse une connexion en clair.
+    options["sslmode"] = query.get("sslmode", ["require"])[0]
+    if "channel_binding" in query:
+        options["channel_binding"] = query["channel_binding"][0]
+    return {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": urllib.parse.unquote(parts.path.lstrip("/")),
+        "USER": urllib.parse.unquote(parts.username or ""),
+        "PASSWORD": urllib.parse.unquote(parts.password or ""),
+        "HOST": parts.hostname or "",
+        "PORT": str(parts.port or ""),
+        "OPTIONS": options,
+        # Une instance sans serveur sert plusieurs requêtes : garder la
+        # connexion évite de la rouvrir à chaque fois, sans la garder trop
+        # longtemps pour ne pas épuiser le quota de Neon.
+        "CONN_MAX_AGE": int(env("PSC_CONN_MAX_AGE", "60")),
+        "CONN_HEALTH_CHECKS": True,
+    }
+
+
+_DATABASE_URL = env("DATABASE_URL", "")
+
 DATABASES = {
-    "default": {
+    "default": _database_from_url(_DATABASE_URL)
+    if _DATABASE_URL
+    else {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": env("PSC_DB_PATH", str(PROJECT_ROOT / "data" / "psc.sqlite3")),
         "OPTIONS": {
@@ -203,7 +251,9 @@ if not DEBUG:
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_REFERRER_POLICY = "same-origin"
     X_FRAME_OPTIONS = "DENY"
-    if env_bool("PSC_BEHIND_PROXY", False):
+    # Vercel termine le TLS : sans cet en-tête, Django croit la requête en
+    # clair et la redirection ci-dessus boucle indéfiniment.
+    if env_bool("PSC_BEHIND_PROXY", ON_VERCEL):
         SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 

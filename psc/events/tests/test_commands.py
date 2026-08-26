@@ -100,3 +100,31 @@ class LookbackTests(PscTestCase):
         event = self.make_event("Course oubliée")
         self.make_edition(event=event, start=datetime.date(2020, 6, 14))
         self.assertEqual(len(predicted_editions(2027, lookback=10)), 1)
+
+
+class SeedPrivacyTests(PscTestCase):
+    """L'amorçage ne fabrique aucune donnée personnelle."""
+
+    def test_seeding_creates_no_person_and_no_registration(self):
+        from core.models import Member
+        from events.models import Feedback, Participation
+
+        call_command("seed_reference", stdout=StringIO())
+        call_command("seed_history", stdout=StringIO())
+
+        self.assertTrue(EventEdition.objects.exists(), "L'amorçage n'a rien chargé.")
+        self.assertEqual(Member.objects.count(), 0)
+        self.assertEqual(Participation.objects.count(), 0)
+        self.assertEqual(Feedback.objects.count(), 0)
+
+    def test_no_seed_command_mentions_a_person_model(self):
+        """Garde-fou de lecture : aucune commande ne doit importer ces modèles."""
+        import pathlib
+
+        commands = pathlib.Path(__file__).resolve().parents[1] / "management" / "commands"
+        for source in commands.glob("seed_*.py"):
+            text = source.read_text(encoding="utf-8")
+            for forbidden in ("Member", "Participation", "Feedback("):
+                self.assertNotIn(
+                    f"import {forbidden}", text, f"{source.name} importe {forbidden}"
+                )

@@ -2,3 +2,6 @@ Django==6.1
 # Assainissement du HTML saisi par les membres dans l'éditeur de texte riche.
 # Indispensable : écrire soi-même un filtre HTML est une faille annoncée.
 nh3==0.3.7
+# Pilote PostgreSQL, utilisé en ligne. En local la base reste SQLite, mais la
+# dépendance est déclarée pour que le paquet déployé soit complet.
+psycopg[binary]==3.3.4

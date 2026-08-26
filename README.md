@@ -102,6 +102,53 @@ récurrentes d'Île-de-France et les grands rendez-vous nationaux, dont chaque
 épreuve. Le détail de la méthode est en tête du fichier
 `psc/events/management/commands/seed_calendar_2027.py`.
 
+## Mise en ligne sur Vercel
+
+Le site tourne sur Vercel, en base PostgreSQL Neon. En local rien ne change :
+sans `DATABASE_URL`, l'application reste sur SQLite.
+
+Vercel détecte `psc/manage.py`, lit `WSGI_APPLICATION`, lance `collectstatic`
+pendant la construction et sert les fichiers statiques depuis son CDN. Il n'y a
+donc ni point d'entrée à écrire, ni configuration de statiques.
+
+### Variables à déclarer dans le projet Vercel
+
+Pour l'environnement **Production et Build**, les deux : Vercel exécute
+`manage.py` pendant la construction pour découvrir les réglages, et
+`PSC_SECRET_KEY` y est déjà obligatoire.
+
+| Variable | Valeur |
+|---|---|
+| `PSC_SECRET_KEY` | `manage.py generate_secret_key` |
+| `PSC_ACCESS_PASSWORD_HASH` | `manage.py hash_access_password` |
+| `DATABASE_URL` | posée automatiquement par l'intégration Neon |
+
+`PSC_DEBUG` reste vide. `PSC_BEHIND_PROXY` est déduit de la présence de Vercel.
+Les adresses du projet et des prévisualisations sont ajoutées d'office aux
+hôtes autorisés.
+
+### Déployer
+
+```bash
+npx vercel login          # une fois
+npx vercel link           # une fois, pour rattacher le répertoire au projet
+npx vercel env pull       # récupère DATABASE_URL dans .env.local
+
+# migrations et données de référence, depuis le poste vers la base distante
+set -a; . ./.env.local; set +a
+.venv/bin/python psc/manage.py migrate
+.venv/bin/python psc/manage.py seed_reference
+.venv/bin/python psc/manage.py seed_history
+
+npx vercel deploy --prod
+```
+
+Les migrations se lancent à la main, avant la mise en ligne. Elles ne sont pas
+dans le script de construction : une migration fautive partirait alors en
+production sans que personne l'ait vue.
+
+L'amorçage ne crée **aucune donnée personnelle**, ni membre ni inscription.
+
 ## Sauvegarde
 
 La base est un fichier. `cp data/psc.sqlite3 sauvegarde-$(date +%F).sqlite3`

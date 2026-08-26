@@ -17,6 +17,10 @@ venv/
 *.sqlite3-wal
 *.sqlite3-shm
 
+# Plateforme de déploiement
+.vercel/
+.env.local
+
 # Outils
 .ruff_cache/
 .pytest_cache/

@@ -13,6 +13,10 @@ Chaque édition porte sa source. Trois niveaux :
 
 Ce qui n'a pas pu être sourcé n'est pas inventé : il manque, et se saisit
 depuis le site.
+
+Aucune donnée personnelle n'est amorcée : ni membre, ni inscription, ni
+évaluation. Ces informations n'appartiennent qu'aux personnes concernées et
+n'ont pas à être fabriquées. Un test le vérifie.
 """
 
 import datetime
