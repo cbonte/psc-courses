@@ -1028,13 +1028,19 @@ a.psc-bar:hover .psc-bar-fill { background: var(--psc-primary); }
     column-gap: .7rem;
   }
   .psc-edition-cta { justify-self: stretch; margin-top: .6rem; }
-  .psc-edition-cta .psc-participation { justify-content: flex-start; }
+  /* L'action reste calée à droite, comme sur grand écran : c'est là que le
+     pouce l'attend, et une épreuve sans format aurait sinon son bouton seul
+     à gauche. */
 
   /* Une seule ligne : le sélecteur prend la place restante, le bouton garde
      la sienne. Sans min-width à zéro, la largeur minimale du sélecteur
      l'emporte sur le flex-basis, il refuse de se comprimer, et le bouton
      bascule seul sur une deuxième ligne. */
-  .psc-edition-cta .psc-join { width: 100%; flex-wrap: nowrap; }
+  .psc-edition-cta .psc-join {
+    width: 100%;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+  }
   .psc-edition-cta .psc-join .form-select { flex: 1 1 0; min-width: 0; }
   .psc-edition-cta .psc-join .btn { flex: 0 0 auto; white-space: nowrap; }
   .psc-date-day { font-size: 1.3rem; }
