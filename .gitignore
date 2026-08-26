@@ -21,6 +21,10 @@ venv/
 .vercel/
 .env.local
 
+# Fichiers créés par erreur quand une option de ligne de commande est prise
+# pour un nom de fichier.
+/-*
+
 # Outils
 .ruff_cache/
 .pytest_cache/

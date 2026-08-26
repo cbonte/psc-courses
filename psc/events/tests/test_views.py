@@ -1116,3 +1116,34 @@ class MonthLabelTests(PscTestCase):
         from events.models import MONTH_ABBR
 
         self.assertEqual(len(set(MONTH_ABBR)), 12)
+
+
+class ParticipationLayoutTests(PscTestCase):
+    def setUp(self):
+        super().setUp()
+        self.edition = self.make_edition()
+        self.make_format(self.edition)
+        Participation.objects.create(member=self.make_member("Alex"), edition=self.edition)
+        self.calendar = reverse("events:calendar_year", args=[self.edition.year])
+
+    def test_the_registrant_count_appears_once(self):
+        """Il était rendu deux fois : dans la ligne d'informations et près du bouton."""
+        body = self.client.get(self.calendar).content.decode()
+        card = body[body.index(f'id="edition-{self.edition.pk}"') :]
+        card = card[: card.index("</article>")]
+        # On compte l'élément, pas le mot : l'adresse du panneau des inscrits
+        # contient « inscrits » et fausserait un décompte textuel.
+        self.assertEqual(card.count("psc-count-link"), 1, "Compteur affiché plusieurs fois.")
+        self.assertNotIn('class="psc-count"', card, "L'ancien compteur subsiste.")
+
+    def test_the_count_is_the_one_that_unfolds_the_list(self):
+        body = self.client.get(self.calendar).content.decode()
+        self.assertIn("psc-count-link", body)
+        self.assertIn(reverse("events:participants", args=[self.edition.pk]), body)
+
+    def test_the_format_choice_sits_with_its_button(self):
+        body = self.client.get(self.calendar).content.decode()
+        form = body[body.index('class="psc-join"') :]
+        form = form[: form.index("</form>")]
+        self.assertIn("<select", form)
+        self.assertIn("Je participe", form)
