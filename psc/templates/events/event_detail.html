@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% load psc %}
+{% block title %}{{ event.name }}{% endblock %}
+{% block og_type %}article{% endblock %}
+{% block og_title %}{{ event.name }}{% endblock %}
+{% block og_description %}{{ event.description|default:event.name|truncatechars:180 }}{% endblock %}
+{% block description %}{{ event.description|default:event.name|truncatechars:180 }}{% endblock %}
+
+{% block content %}
+<div class="psc-page-head">
+  <div>
+    <p class="psc-eyebrow">
+      <span class="psc-badge" style="--tone: {{ event.discipline.color }}; color: {{ event.discipline.color|contrast_on }}">{{ event.discipline.label }}</span>
+      {% if event.location %}<span class="ms-2">{{ event.location }}</span>{% endif %}
+    </p>
+    <h1 class="psc-title">{{ event.name }}</h1>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    {% if event.website %}
+      <a class="btn btn-sm psc-btn-quiet" href="{{ event.website }}" rel="noopener noreferrer" target="_blank">Site officiel</a>
+    {% endif %}
+    <a class="btn btn-sm btn-psc" href="{% url 'events:edition_create' %}?return_to={{ request.path|urlencode }}"
+       hx-get="{% url 'events:edition_create' %}?return_to={{ request.path|urlencode }}"
+       hx-target="#edition-form" hx-swap="outerHTML">
+      <svg class="psc-icon" aria-hidden="true"><use href="#i-plus"/></svg>
+      Ajouter une édition
+    </a>
+  </div>
+</div>
+
+<div id="edition-form"></div>
+
+{% if event.description %}
+  <div class="psc-card mb-4"><p class="mb-0">{{ event.description|linebreaksbr }}</p></div>
+{% endif %}
+
+{% for edition in editions %}
+  <section class="psc-card mb-4" id="edition-{{ edition.pk }}">
+    <div class="psc-edition-head">
+      <div>
+        <h2 class="psc-card-title mb-1">Édition {{ edition.year }}</h2>
+        <p class="psc-edition-meta mb-0">
+          <span>{% date_range edition %}</span>
+          {% if edition.status == 'provisional' %}<span class="psc-sep">·</span><span class="psc-flag">Date à confirmer</span>{% endif %}
+          {% if edition.is_canceled %}<span class="psc-sep">·</span><span class="psc-flag psc-flag-canceled">Annulée</span>{% endif %}
+          {% countdown edition as soon %}{% if soon %}<span class="psc-sep">·</span><span class="psc-soon">{{ soon }}</span>{% endif %}
+        </p>
+      </div>
+      <div class="d-flex gap-2 align-items-center flex-wrap">
+<button type="button" class="psc-action"
+                hx-get="{% url 'events:edition_edit' edition.pk %}?return_to={{ request.path|urlencode }}"
+                hx-target="#edition-{{ edition.pk }}" hx-swap="outerHTML">Modifier</button>
+        <button type="button" class="psc-action psc-action-danger"
+                hx-post="{% url 'events:edition_delete' edition.pk %}"
+                hx-vals='{"return_to": "{{ request.path }}"}'>Supprimer</button>
+        <a class="psc-ics" href="{% url 'events:edition_ics' edition.pk %}">
+          <svg class="psc-icon" aria-hidden="true"><use href="#i-calendar"/></svg>Ajouter à mon agenda
+        </a>
+        {% if edition.registration_url %}
+          <a class="btn btn-sm psc-btn-quiet" href="{{ edition.registration_url }}" rel="noopener noreferrer" target="_blank">S'inscrire officiellement</a>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if edition.description %}<p class="mt-3">{{ edition.description|linebreaksbr }}</p>{% endif %}
+
+    {% if edition.formats.all %}
+      <h3 class="psc-subhead">Formats</h3>
+      <ul class="psc-format-list">
+        {% for format in edition.formats.all %}
+          <li><strong>{{ format.name }}</strong>{% if format.distance %} <span class="psc-muted">{{ format.distance }}</span>{% endif %}{% if format.description %}<div class="psc-muted small">{{ format.description }}</div>{% endif %}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <h3 class="psc-subhead">Participation</h3>
+    {% include "events/_participation.html" %}
+
+    {% if edition.participations.all %}
+      <ul class="psc-people">
+        {% for participation in edition.participations.all %}
+          <li>
+            <span class="psc-avatar">{{ participation.member.initials }}</span>
+            <span>{{ participation.member.full_name }}</span>
+            {% if participation.format %}<span class="psc-muted small">{{ participation.format.name }}</span>{% endif %}
+            {% if participation.status == 'interested' %}<span class="psc-flag">intéressé</span>{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    {% if edition.is_past %}
+      <h3 class="psc-subhead">Évaluations</h3>
+      {% include "events/_feedback_list.html" with feedbacks=edition.feedbacks.all %}
+      <a class="btn btn-sm psc-btn-quiet mt-2" href="{% url 'events:feedback' edition.pk %}">
+        {% if current_member %}Donner mon avis{% else %}Voir le formulaire d'évaluation{% endif %}
+      </a>
+    {% endif %}
+  </section>
+{% empty %}
+  <div class="psc-empty">
+    <p>Cette course n'a encore aucune édition enregistrée.</p>
+    <button class="btn btn-sm btn-psc" type="button"
+            hx-get="{% url 'events:edition_create' %}?return_to={{ request.path|urlencode }}"
+            hx-target="#edition-form" hx-swap="outerHTML">Ajouter une édition</button>
+  </div>
+{% endfor %}
+{% endblock %}

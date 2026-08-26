@@ -1,0 +1,19 @@
+{% load psc %}
+{% if feedbacks %}
+  <div class="psc-feedbacks">
+    {% for feedback in feedbacks %}
+      <blockquote class="psc-quote">
+        <p class="mb-1">{% rating feedback.average_score %}</p>
+        {% if feedback.comment %}<p class="mb-1">{{ feedback.comment|linebreaksbr }}</p>{% endif %}
+        {% if detailed and feedback.scores.all %}
+          <ul class="psc-score-detail">
+            {% for score in feedback.scores.all %}<li>{{ score.criterion.label }} <strong>{{ score.score }}/5</strong></li>{% endfor %}
+          </ul>
+        {% endif %}
+        <footer>{{ feedback.member.first_name }}, le {{ feedback.updated_at|date:"j F Y" }}</footer>
+      </blockquote>
+    {% endfor %}
+  </div>
+{% else %}
+  <p class="psc-muted mb-0">Personne n'a encore évalué cette édition.</p>
+{% endif %}

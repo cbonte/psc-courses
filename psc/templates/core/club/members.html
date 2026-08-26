@@ -1,0 +1,23 @@
+{% extends "core/club/base.html" %}
+{% block club_title %}Membres{% endblock %}
+{% block club_heading %}Membres{% endblock %}
+
+{% block club_content %}
+<p class="psc-muted">Les membres se créent tout seuls, en se déclarant lors de leur première visite. On corrige ici les noms mal saisis, et on retire ceux qui ont quitté le club sans perdre leurs inscriptions passées.</p>
+
+<form class="psc-filters mb-3" method="get">
+  <div class="psc-search">
+    <svg class="psc-icon" aria-hidden="true"><use href="#i-search"/></svg>
+    <label class="visually-hidden" for="member-q">Chercher un membre</label>
+    <input type="search" class="form-control" id="member-q" name="q" value="{{ query }}"
+           placeholder="Chercher un nom…">
+  </div>
+  <button type="submit" class="btn btn-sm psc-btn-quiet">Chercher</button>
+</form>
+
+<div class="psc-rows">
+  {% for object in members %}{% include "core/club/_member_row.html" %}{% empty %}
+    <div class="psc-empty"><p class="mb-0">Aucun membre{% if query %} ne correspond à « {{ query }} »{% endif %}.</p></div>
+  {% endfor %}
+</div>
+{% endblock %}

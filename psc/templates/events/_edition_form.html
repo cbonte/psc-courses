@@ -1,0 +1,115 @@
+{% load psc %}
+<article class="psc-edition-form" id="{% if edition %}edition-{{ edition.pk }}{% else %}edition-form{% endif %}">
+  <form {% if edition or is_prediction %}hx-post="{{ action }}"
+        hx-target="#{% if edition %}edition-{{ edition.pk }}{% else %}edition-form{% endif %}"
+        hx-swap="outerHTML"{% else %}hx-post="{{ action }}" hx-target="#edition-form" hx-swap="outerHTML"{% endif %}
+        method="post" action="{{ action }}" novalidate>
+    {% csrf_token %}
+    {% if return_to %}<input type="hidden" name="return_to" value="{{ return_to }}">{% endif %}
+
+    <div class="psc-form-head">
+      <h2 class="psc-card-title mb-0">{{ title }}</h2>
+      {% if cancel_url %}
+        <button type="button" class="psc-close" aria-label="Annuler"
+                hx-get="{{ cancel_url }}"
+                hx-target="#{% if edition %}edition-{{ edition.pk }}{% else %}edition-form{% endif %}"
+                hx-swap="outerHTML">&times;</button>
+      {% endif %}
+    </div>
+
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger py-2">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    {# Le nom pilote tout : discipline, ville et site sont hérités s'il est connu. #}
+    <div class="psc-field">
+      <label class="form-label" for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+      {{ form.name }}
+      <datalist id="event-names">
+        {% for name in suggestions %}<option value="{{ name }}"></option>{% endfor %}
+      </datalist>
+      <div class="form-text">{{ form.name.help_text }}</div>
+      {{ form.name.errors }}
+    </div>
+
+    <div class="psc-form-grid">
+      <div class="psc-field">
+        <label class="form-label" for="{{ form.date_start.id_for_label }}">{{ form.date_start.label }}</label>
+        {{ form.date_start }}
+        {{ form.date_start.errors }}
+      </div>
+      <div class="psc-field">
+        <label class="form-label" for="{{ form.discipline.id_for_label }}">{{ form.discipline.label }}</label>
+        {{ form.discipline }}
+        {{ form.discipline.errors }}
+      </div>
+    </div>
+
+    <fieldset class="psc-field">
+      <legend class="form-label">{{ form.status.label }}</legend>
+      <div class="psc-chipset">
+        {% for radio in form.status %}
+          {{ radio.tag }}
+          <label class="psc-chip psc-chip-plain" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+        {% endfor %}
+      </div>
+      {{ form.status.errors }}
+    </fieldset>
+
+    <details class="psc-more-fields" {% if form.city.value or form.formats.value or form.description.value or form.date_end.value or form.errors %}open{% endif %}>
+      <summary class="psc-summary">Lieu, formats, description, liens</summary>
+
+      <div class="psc-form-grid mt-2">
+        <div class="psc-field">
+          <label class="form-label" for="{{ form.city.id_for_label }}">{{ form.city.label }}</label>
+          {{ form.city }}
+        </div>
+        <div class="psc-field">
+          <label class="form-label" for="{{ form.department.id_for_label }}">{{ form.department.label }}</label>
+          {{ form.department }}
+        </div>
+      </div>
+
+      <div class="psc-field">
+        <label class="form-label" for="{{ form.date_end.id_for_label }}">{{ form.date_end.label }}</label>
+        {{ form.date_end }}
+        <div class="form-text">{{ form.date_end.help_text }}</div>
+        {{ form.date_end.errors }}
+      </div>
+
+      <div class="psc-field">
+        <label class="form-label" for="{{ form.formats.id_for_label }}">{{ form.formats.label }}</label>
+        {{ form.formats }}
+        <div class="form-text">{{ form.formats.help_text }}</div>
+      </div>
+
+      <div class="psc-field">
+        <label class="form-label" for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+        {{ form.description }}
+      </div>
+
+      <div class="psc-form-grid">
+        <div class="psc-field">
+          <label class="form-label" for="{{ form.registration_url.id_for_label }}">{{ form.registration_url.label }}</label>
+          {{ form.registration_url }}
+          {{ form.registration_url.errors }}
+        </div>
+        <div class="psc-field">
+          <label class="form-label" for="{{ form.website.id_for_label }}">{{ form.website.label }}</label>
+          {{ form.website }}
+          {{ form.website.errors }}
+        </div>
+      </div>
+    </details>
+
+    <div class="psc-form-actions">
+      <button type="submit" class="btn btn-psc">{{ submit_label }}</button>
+      {% if cancel_url %}
+        <button type="button" class="btn psc-btn-quiet"
+                hx-get="{{ cancel_url }}"
+                hx-target="#{% if edition %}edition-{{ edition.pk }}{% else %}edition-form{% endif %}"
+                hx-swap="outerHTML">Annuler</button>
+      {% endif %}
+    </div>
+  </form>
+</article>

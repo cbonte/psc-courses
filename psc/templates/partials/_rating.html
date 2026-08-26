@@ -1,0 +1,4 @@
+<span class="psc-rating" role="img" aria-label="{% if has_score %}{{ value|floatformat:1 }} sur 5{% else %}Pas encore évalué{% endif %}">
+  <span class="psc-rating-track" aria-hidden="true">★★★★★</span>
+  <span class="psc-rating-fill" style="width: {{ percent|floatformat:0 }}%" aria-hidden="true">★★★★★</span>
+</span>{% if has_score %}<span class="psc-rating-value">{{ value|floatformat:1 }}</span>{% endif %}{% if count %}<span class="psc-rating-count">({{ count }})</span>{% endif %}

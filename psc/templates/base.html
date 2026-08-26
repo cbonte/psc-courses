@@ -1,0 +1,156 @@
+{% load static %}<!doctype html>
+<html lang="fr" data-bs-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Calendrier des courses{% endblock %} · Paris Sport Club</title>
+<meta name="description" content="{% block description %}Le calendrier des courses du Paris Sport Club : triathlon, course à pied, natation, vélo.{% endblock %}">
+
+<meta property="og:site_name" content="Paris Sport Club">
+<meta property="og:type" content="{% block og_type %}website{% endblock %}">
+<meta property="og:title" content="{% block og_title %}Calendrier des courses du Paris Sport Club{% endblock %}">
+<meta property="og:description" content="{% block og_description %}Triathlon, course à pied, natation, vélo : les épreuves du club et qui y participe.{% endblock %}">
+<meta property="og:url" content="{{ request.build_absolute_uri }}">
+<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'images/psc.png' %}">
+<meta name="twitter:card" content="summary">
+
+<link rel="icon" type="image/png" href="{% static 'images/psc.png' %}">
+<link rel="stylesheet" href="{% static 'vendor/bootstrap.min.css' %}">
+<link rel="stylesheet" href="{% static 'css/psc.css' %}">
+<link rel="alternate" type="text/calendar" title="Courses PSC" href="{% url 'events:calendar_ics' %}">
+<script>
+  // Avant le premier rendu, pour éviter le clignotement au chargement.
+  (function () {
+    try {
+      var stored = localStorage.getItem("psc-theme");
+      var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-bs-theme", theme);
+    } catch (e) {}
+  })();
+</script>
+</head>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+      data-member-id="{{ current_member.pk|default:'' }}"
+      data-restore-url="{% url 'core:identity_restore' %}">
+
+<svg xmlns="http://www.w3.org/2000/svg" class="d-none" aria-hidden="true">
+  <symbol id="i-calendar" viewBox="0 0 16 16"><path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/></symbol>
+  <symbol id="i-user" viewBox="0 0 16 16"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2 1H6a4 4 0 0 0-4 4 2 2 0 0 0 2 2h8a2 2 0 0 0 2-2 4 4 0 0 0-4-4"/></symbol>
+  <symbol id="i-users" viewBox="0 0 16 16"><path d="M7 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m5 6H2a2 2 0 0 1-2-2 4 4 0 0 1 4-4h6a4 4 0 0 1 4 4 2 2 0 0 1-2 2m1.5-9a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 16 16"><path d="M8 0a5 5 0 0 0-5 5c0 4 5 11 5 11s5-7 5-11a5 5 0 0 0-5-5m0 7a2 2 0 1 1 0-4 2 2 0 0 1 0 4"/></symbol>
+  <symbol id="i-star" viewBox="0 0 16 16"><path d="M3.6 15.3 8 12.9l4.4 2.4-.9-4.9 3.6-3.5-4.9-.7L8 .8 5.8 6.2l-4.9.7 3.6 3.5z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 16 16"><path d="M7 1h2v6h6v2H9v6H7V9H1V7h6z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 16 16"><path d="M6 1h4a1 1 0 0 1 1 1v1h3.5a.5.5 0 0 1 0 1H14l-.8 10.1a2 2 0 0 1-2 1.9H4.8a2 2 0 0 1-2-1.9L2 4h-.5a.5.5 0 0 1 0-1H5V2a1 1 0 0 1 1-1m0 2h4V2H6zM5.5 6l.4 7h1L6.5 6zm4.6 0-.4 7h1l.4-7z"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 16 16"><path d="M12.1.9a2 2 0 0 1 2.8 2.8l-.8.8-2.8-2.8zM10.5 2.5 1.6 11.4a1 1 0 0 0-.26.46l-1.3 4.1a.3.3 0 0 0 .37.37l4.1-1.3a1 1 0 0 0 .46-.26l8.9-8.9z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 16 16"><path d="M11.7 10.3a6 6 0 1 0-1.4 1.4l3.3 3.3a1 1 0 0 0 1.4-1.4zM7 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8"/></symbol>
+  <symbol id="i-check" viewBox="0 0 16 16"><path d="M13.5 3.5 6 11 2.5 7.5 1 9l5 5 9-9z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 16 16"><path d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6m0-9.5V0m0 16v-1.5M14.5 8H16M0 8h1.5m10.9-4.9 1-1M2.6 13.4l1-1m0-8.8-1-1m10.8 10.8-1-1" stroke="currentColor" stroke-width="1.3" fill="none"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 16 16"><path d="M6 .3a8 8 0 1 0 9.7 9.7A7 7 0 0 1 6 .3"/></symbol>
+</svg>
+
+{% if access_unprotected %}
+  <div class="alert alert-warning rounded-0 border-0 mb-0 text-center small py-1">
+    Aucun mot de passe d'accès n'est configuré. Renseignez <code>PSC_ACCESS_PASSWORD_HASH</code> avant toute mise en ligne.
+  </div>
+{% endif %}
+
+<nav class="navbar navbar-expand-md psc-nav sticky-top">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'events:dashboard' %}">
+      <img src="{% static 'images/psc.png' %}" alt="Paris Sport Club" height="34">
+      <span class="psc-brand-text d-none d-sm-inline">Calendrier<span class="d-none d-lg-inline"> des courses</span></span>
+    </a>
+
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#psc-menu" aria-controls="psc-menu" aria-expanded="false" aria-label="Afficher le menu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="psc-menu">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item"><a class="nav-link{% if nav == 'calendar' %} active{% endif %}" href="{% url 'events:calendar' %}">Calendrier</a></li>
+        <li class="nav-item"><a class="nav-link{% if nav == 'mine' %} active{% endif %}" href="{% url 'events:my_events' %}">Mes courses</a></li>
+        <li class="nav-item"><a class="nav-link{% if nav == 'club' %} active{% endif %}" href="{% url 'core:club' %}">Le club</a></li>
+      </ul>
+      <div class="d-flex align-items-center gap-2 py-2 py-md-0">
+        <button class="btn btn-sm psc-theme-toggle" type="button" data-psc-theme-toggle aria-label="Changer de thème">
+          <svg class="psc-icon psc-icon-light" aria-hidden="true"><use href="#i-sun"/></svg>
+          <svg class="psc-icon psc-icon-dark" aria-hidden="true"><use href="#i-moon"/></svg>
+        </button>
+        {% if current_member %}
+          <div class="dropdown">
+            <button class="btn btn-sm psc-identity dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+              <span class="psc-avatar">{{ current_member.initials }}</span>
+              <span class="d-none d-sm-inline">{{ current_member.first_name }}</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><h6 class="dropdown-header">{{ current_member.full_name }}</h6></li>
+              <li><a class="dropdown-item" href="{% url 'events:my_events' %}">Mes courses</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <form method="post" action="{% url 'core:identity_clear' %}">
+                  {% csrf_token %}
+                  <button class="dropdown-item" type="submit">Ce n'est pas moi</button>
+                </form>
+              </li>
+            </ul>
+          </div>
+        {% else %}
+          <button class="btn btn-sm btn-psc" hx-get="{% url 'core:identity_picker' %}"
+                  hx-target="#identity-modal-body" hx-swap="innerHTML"
+                  data-bs-toggle="modal" data-bs-target="#identity-modal">
+            <svg class="psc-icon" aria-hidden="true"><use href="#i-user"/></svg>
+            Qui es-tu&nbsp;?
+          </button>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main class="container py-4">
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags|default:'info' }}" role="alert">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="psc-footer">
+  <div class="container d-flex flex-wrap gap-3 justify-content-between align-items-center">
+    <span>Paris Sport Club · Calendrier des courses</span>
+    <span class="d-flex flex-wrap gap-3">
+      <a href="{% url 'events:calendar_ics' %}">
+        <svg class="psc-icon" aria-hidden="true"><use href="#i-calendar"/></svg>
+        S'abonner au calendrier
+      </a>
+      <a href="{% url 'core:club' %}">
+        <svg class="psc-icon" aria-hidden="true"><use href="#i-pencil"/></svg>
+        Le club
+      </a>
+    </span>
+  </div>
+</footer>
+
+<div class="modal fade" id="identity-modal" tabindex="-1" aria-labelledby="identity-modal-title" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="identity-modal-title">Qui es-tu ?</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body" id="identity-modal-body">
+        <p class="text-body-secondary mb-0">Chargement…</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="psc-toasts" class="toast-container position-fixed bottom-0 end-0 p-3" aria-live="polite" aria-atomic="true"></div>
+
+<script src="{% static 'vendor/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'vendor/htmx.min.js' %}"></script>
+<script src="{% static 'js/psc.js' %}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

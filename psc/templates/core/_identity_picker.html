@@ -1,0 +1,45 @@
+<p class="text-body-secondary small">
+  Choisissez votre nom dans la liste. Votre navigateur s'en souviendra pour les prochaines visites.
+</p>
+
+<div class="psc-search mb-2">
+  <svg class="psc-icon" aria-hidden="true"><use href="#i-search"/></svg>
+  <label for="identity-search" class="visually-hidden">Chercher un membre</label>
+  <input type="search" id="identity-search" name="q" value="{{ query }}"
+         class="form-control" placeholder="Chercher un prénom…" autocomplete="off"
+         hx-get="{% url 'core:identity_search' %}"
+         hx-trigger="input changed delay:200ms, search"
+         hx-target="#identity-results" hx-swap="innerHTML">
+</div>
+
+<div id="identity-results">
+  {% include "core/_identity_results.html" %}
+</div>
+
+<hr>
+
+<details {% if form.errors %}open{% endif %}>
+  <summary class="psc-summary">Je ne suis pas dans la liste</summary>
+  <form method="post" action="{% url 'core:identity_create' %}" class="row g-2 mt-2"
+        hx-post="{% url 'core:identity_create' %}" hx-target="#identity-modal-body" hx-swap="innerHTML">
+    {% csrf_token %}
+    <div class="col-sm-6">
+      <label for="{{ form.first_name.id_for_label }}" class="form-label small">Prénom</label>
+      {{ form.first_name }}
+    </div>
+    <div class="col-sm-6">
+      <label for="{{ form.last_name.id_for_label }}" class="form-label small">Nom</label>
+      {{ form.last_name }}
+    </div>
+    {% if form.non_field_errors or form.first_name.errors or form.last_name.errors %}
+      <div class="col-12">
+        <div class="alert alert-danger py-2 small mb-0">
+          {{ form.non_field_errors }}{{ form.first_name.errors }}{{ form.last_name.errors }}
+        </div>
+      </div>
+    {% endif %}
+    <div class="col-12">
+      <button type="submit" class="btn btn-psc btn-sm">M'ajouter au club</button>
+    </div>
+  </form>
+</details>

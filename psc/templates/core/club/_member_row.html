@@ -1,0 +1,15 @@
+<div class="psc-row{% if not object.is_active %} psc-row-muted{% endif %}" id="member-{{ object.pk }}">
+  <span class="psc-avatar">{{ object.initials }}</span>
+  <div class="psc-row-main">
+    <strong>{{ object.full_name }}</strong>
+    <span class="psc-muted small">
+      {% if object.races %}{{ object.races }} inscription{{ object.races|pluralize }}{% else %}aucune inscription{% endif %}
+      {% if not object.is_active %} · a quitté le club{% endif %}
+    </span>
+  </div>
+  <div class="psc-row-actions">
+    <button type="button" class="psc-action"
+            hx-get="{% url 'core:member_edit' object.pk %}"
+            hx-target="#member-{{ object.pk }}" hx-swap="outerHTML">Modifier</button>
+  </div>
+</div>

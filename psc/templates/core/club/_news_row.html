@@ -1,0 +1,15 @@
+<div class="psc-row" id="news-{{ object.pk }}">
+  <div class="psc-row-main">
+    <strong>{{ object.title }}</strong>
+    <span class="psc-muted small">{{ object.published_at|date:"j F Y à H:i" }}{% if not object.is_published %} · masquée{% endif %}</span>
+    <p class="mb-0 small">{{ object.body|truncatechars:180 }}</p>
+  </div>
+  <div class="psc-row-actions">
+    <button type="button" class="psc-action"
+            hx-get="{% url 'core:news_edit' object.pk %}"
+            hx-target="#news-{{ object.pk }}" hx-swap="outerHTML">Modifier</button>
+    <button type="button" class="psc-action psc-action-danger"
+            hx-post="{% url 'core:news_delete' object.pk %}"
+            hx-target="#news-{{ object.pk }}" hx-swap="outerHTML">Supprimer</button>
+  </div>
+</div>

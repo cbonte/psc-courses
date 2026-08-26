@@ -1,0 +1,15 @@
+{% if members %}
+  <div class="psc-member-grid">
+    {% for member in members %}
+      <button type="button" class="psc-member-chip"
+              hx-post="{% url 'core:identity_set' %}" hx-vals='{"member": "{{ member.pk }}"}'>
+        <span class="psc-avatar">{{ member.initials }}</span>
+        <span>{{ member.full_name }}</span>
+      </button>
+    {% endfor %}
+  </div>
+{% else %}
+  <p class="text-body-secondary small mb-0">
+    {% if query %}Aucun membre ne correspond à « {{ query }} ».{% else %}Aucun membre enregistré pour l'instant.{% endif %}
+  </p>
+{% endif %}

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load psc %}
+{% block title %}Mes courses{% endblock %}
+
+{% block content %}
+<div class="psc-page-head">
+  <div>
+    <p class="psc-eyebrow">Paris Sport Club</p>
+    <h1 class="psc-title">Mes courses</h1>
+  </div>
+</div>
+
+{% if not member %}
+  <div class="psc-empty">
+    <h2 class="h5">Dites-nous qui vous êtes</h2>
+    <p>Vos inscriptions sont rattachées à votre nom. Choisissez-le une fois, votre navigateur s'en souviendra.</p>
+    <button class="btn btn-psc" hx-get="{% url 'core:identity_picker' %}"
+            hx-target="#identity-modal-body" hx-swap="innerHTML"
+            data-bs-toggle="modal" data-bs-target="#identity-modal">Qui es-tu ?</button>
+  </div>
+{% else %}
+  <section class="psc-card mb-4">
+    <h2 class="psc-card-title">À venir</h2>
+    {% if upcoming %}
+      <ul class="psc-mini-list">
+        {% for participation in upcoming %}
+          <li>
+            <a href="{{ participation.edition.get_absolute_url }}">{{ participation.edition.event.name }}</a>
+            <span class="psc-muted">{% date_range participation.edition %}{% if participation.format %} · {{ participation.format.name }}{% endif %}{% if participation.status == 'interested' %} · intéressé{% endif %}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="psc-muted mb-0">Aucune course à venir. <a href="{% url 'events:calendar' %}">Parcourir le calendrier</a>.</p>
+    {% endif %}
+  </section>
+
+  <section class="psc-card">
+    <h2 class="psc-card-title">Déjà courues</h2>
+    {% if past %}
+      <ul class="psc-mini-list">
+        {% for participation in past %}
+          <li>
+            <a href="{{ participation.edition.get_absolute_url }}">{{ participation.edition.event.name }}</a>
+            <span class="psc-muted">{% date_range participation.edition %}</span>
+            <a class="psc-inline-link" href="{% url 'events:feedback' participation.edition.pk %}">évaluer</a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="psc-muted mb-0">Rien encore.</p>
+    {% endif %}
+  </section>
+{% endif %}
+{% endblock %}

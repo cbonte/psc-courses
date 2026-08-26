@@ -1,0 +1,40 @@
+{% extends "core/club/base.html" %}
+{% block club_title %}Le club{% endblock %}
+{% block club_heading %}Le club{% endblock %}
+
+{% block club_content %}
+<p class="psc-muted">Tout se règle ici, et tout le monde peut le faire. Rien n'est définitif : la corbeille conserve ce qui est retiré, le journal garde la trace de qui a fait quoi.</p>
+
+<div class="psc-tiles">
+  <a class="psc-tile" href="{% url 'core:disciplines' %}">
+    <span class="psc-tile-n">{{ counts.disciplines }}</span>
+    <span class="psc-tile-l">disciplines</span>
+    <span class="psc-tile-d">Les catégories de courses et leurs couleurs sur le calendrier.</span>
+  </a>
+  <a class="psc-tile" href="{% url 'core:criteria' %}">
+    <span class="psc-tile-n">{{ counts.criteria }}</span>
+    <span class="psc-tile-l">critères d'évaluation</span>
+    <span class="psc-tile-d">Ce sur quoi on note une course après l'avoir courue.</span>
+  </a>
+  <a class="psc-tile" href="{% url 'core:news' %}">
+    <span class="psc-tile-n">{{ counts.news }}</span>
+    <span class="psc-tile-l">annonces</span>
+    <span class="psc-tile-d">Les messages affichés sur la page d'accueil.</span>
+  </a>
+  <a class="psc-tile" href="{% url 'core:members' %}">
+    <span class="psc-tile-n">{{ counts.members }}</span>
+    <span class="psc-tile-l">membres actifs</span>
+    <span class="psc-tile-d">Corriger un nom, retirer quelqu'un qui a quitté le club.</span>
+  </a>
+  <a class="psc-tile" href="{% url 'events:trash' %}">
+    <span class="psc-tile-n">{{ counts.trash }}</span>
+    <span class="psc-tile-l">dans la corbeille</span>
+    <span class="psc-tile-d">Les épreuves supprimées, restaurables d'un clic.</span>
+  </a>
+  <a class="psc-tile" href="{% url 'core:activity' %}">
+    <span class="psc-tile-n">{{ counts.activity }}</span>
+    <span class="psc-tile-l">au journal</span>
+    <span class="psc-tile-d">Qui a créé, modifié, supprimé ou restauré quoi.</span>
+  </a>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "core/club/base.html" %}
+{% block club_title %}Disciplines{% endblock %}
+{% block club_heading %}Disciplines{% endblock %}
+
+{% block club_content %}
+<p class="psc-muted">Elles servent à classer les courses et donnent leur couleur aux pastilles du calendrier.</p>
+
+<div class="psc-card mb-4">
+  <h2 class="psc-card-title">Ajouter une discipline</h2>
+  <form method="post" class="psc-form-grid align-items-end">
+    {% csrf_token %}
+    {% for field in form %}
+      <div class="psc-field">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+        {{ field.errors }}
+      </div>
+    {% endfor %}
+    <div class="psc-field"><button type="submit" class="btn btn-psc">Ajouter</button></div>
+  </form>
+</div>
+
+<div class="psc-rows">
+  {% for object in objects %}{% include "core/club/_discipline_row.html" %}{% endfor %}
+</div>
+{% endblock %}

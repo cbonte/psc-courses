@@ -1,0 +1,25 @@
+{% extends "core/club/base.html" %}
+{% block club_title %}Critères d'évaluation{% endblock %}
+{% block club_heading %}Critères d'évaluation{% endblock %}
+
+{% block club_content %}
+<p class="psc-muted">Ce sur quoi on note une course après l'avoir courue. Un critère qui a déjà servi ne se supprime pas : décochez-le pour cesser de le proposer, l'historique est conservé.</p>
+
+<div class="psc-card mb-4">
+  <h2 class="psc-card-title">Ajouter un critère</h2>
+  <form method="post" class="psc-form-grid align-items-end">
+    {% csrf_token %}
+    {% for field in form %}
+      <div class="psc-field">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}{{ field.errors }}
+      </div>
+    {% endfor %}
+    <div class="psc-field"><button type="submit" class="btn btn-psc">Ajouter</button></div>
+  </form>
+</div>
+
+<div class="psc-rows">
+  {% for object in objects %}{% include "core/club/_criterion_row.html" %}{% endfor %}
+</div>
+{% endblock %}

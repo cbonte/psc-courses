@@ -1,0 +1,738 @@
+/* Habillage du calendrier PSC.
+   Bootstrap 5 fournit la grille et les composants ; ce fichier porte
+   l'identité du club et les composants propres au calendrier. */
+
+:root {
+  --psc-red: #c62d29;
+  --psc-red-strong: #a92320;
+  --psc-surface: #ffffff;
+  --psc-ground: #eef2f4;
+  --psc-line: #d8e0e5;
+  --psc-ink: #16202b;
+  --psc-muted: #5d6d78;
+  --psc-accent-soft: #f6e4e3;
+  --psc-on-red: #ffffff;
+  --psc-radius: 10px;
+  --psc-shadow: 0 1px 2px rgba(22, 32, 43, .06), 0 4px 16px rgba(22, 32, 43, .05);
+}
+
+[data-bs-theme="dark"] {
+  --psc-red: #ff7a6b;
+  --psc-red-strong: #ff9385;
+  --psc-surface: #161f26;
+  --psc-ground: #0f151a;
+  --psc-line: #2b3841;
+  --psc-ink: #e7eef2;
+  --psc-muted: #9fb0ba;
+  --psc-accent-soft: #38221f;
+  --psc-on-red: #241210;
+  --psc-shadow: none;
+}
+
+body {
+  background: var(--psc-ground);
+  color: var(--psc-ink);
+  font-size: 1rem;
+}
+
+a { color: var(--psc-red); }
+a:hover { color: var(--psc-red-strong); }
+
+.psc-icon {
+  width: 1em;
+  height: 1em;
+  fill: currentColor;
+  vertical-align: -0.125em;
+  margin-right: .3em;
+  flex: none;
+}
+
+.psc-muted { color: var(--psc-muted); }
+
+/* ---------- barre de navigation ---------- */
+
+.psc-nav {
+  background: var(--psc-surface);
+  border-bottom: 1px solid var(--psc-line);
+}
+
+.psc-brand-text {
+  font-weight: 600;
+  letter-spacing: -.01em;
+  color: var(--psc-ink);
+}
+
+.psc-nav .nav-link { color: var(--psc-ink); font-weight: 500; }
+.psc-nav .nav-link.active,
+.psc-nav .nav-link:hover { color: var(--psc-red); }
+
+.psc-theme-toggle,
+.psc-identity {
+  --bs-btn-color: var(--psc-ink);
+  --bs-btn-bg: transparent;
+  --bs-btn-border-color: var(--psc-line);
+  --bs-btn-hover-color: var(--psc-red-strong);
+  --bs-btn-hover-bg: var(--psc-accent-soft);
+  --bs-btn-hover-border-color: var(--psc-red);
+  --bs-btn-active-color: var(--psc-red);
+  --bs-btn-active-bg: var(--psc-accent-soft);
+  --bs-btn-active-border-color: var(--psc-red);
+}
+
+[data-bs-theme="light"] .psc-icon-dark,
+[data-bs-theme="dark"] .psc-icon-light { display: none; }
+
+.psc-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 50%;
+  background: var(--psc-accent-soft);
+  color: var(--psc-red);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  flex: none;
+}
+
+/* ---------- boutons ----------
+   Passer par les variables de Bootstrap plutôt que surcharger color et
+   background : sans --bs-btn-hover-color ni --bs-btn-hover-bg, la règle
+   .btn:hover de Bootstrap devient invalide au calcul, et le bouton perd son
+   fond et hérite de la couleur du texte. Il disparaît alors au survol. */
+
+.btn-psc {
+  --bs-btn-color: var(--psc-on-red);
+  --bs-btn-bg: var(--psc-red);
+  --bs-btn-border-color: var(--psc-red);
+  --bs-btn-hover-color: var(--psc-on-red);
+  --bs-btn-hover-bg: var(--psc-red-strong);
+  --bs-btn-hover-border-color: var(--psc-red-strong);
+  --bs-btn-active-color: var(--psc-on-red);
+  --bs-btn-active-bg: var(--psc-red-strong);
+  --bs-btn-active-border-color: var(--psc-red-strong);
+  --bs-btn-disabled-color: var(--psc-on-red);
+  --bs-btn-disabled-bg: var(--psc-red);
+  --bs-btn-disabled-border-color: var(--psc-red);
+  font-weight: 500;
+}
+
+.psc-btn-quiet {
+  --bs-btn-color: var(--psc-ink);
+  --bs-btn-bg: transparent;
+  --bs-btn-border-color: var(--psc-line);
+  --bs-btn-hover-color: var(--psc-red-strong);
+  --bs-btn-hover-bg: var(--psc-accent-soft);
+  --bs-btn-hover-border-color: var(--psc-red);
+  --bs-btn-active-color: var(--psc-red);
+  --bs-btn-active-bg: var(--psc-accent-soft);
+  --bs-btn-active-border-color: var(--psc-red);
+}
+
+/* ---------- en-tête de page ---------- */
+
+.psc-page-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.psc-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  font-size: .72rem;
+  color: var(--psc-muted);
+  margin: 0 0 .25rem;
+}
+
+.psc-title {
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  font-weight: 700;
+  letter-spacing: -.02em;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.psc-year-nav { display: flex; flex-wrap: wrap; gap: .35rem; }
+
+/* ---------- cartes ---------- */
+
+.psc-card {
+  background: var(--psc-surface);
+  border: 1px solid var(--psc-line);
+  border-radius: var(--psc-radius);
+  box-shadow: var(--psc-shadow);
+  padding: 1.25rem;
+}
+
+.psc-card-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0 0 .9rem;
+}
+
+.psc-subhead {
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--psc-muted);
+  margin: 1.4rem 0 .5rem;
+}
+
+/* ---------- filtres ---------- */
+
+.psc-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem 1rem;
+  align-items: center;
+  background: var(--psc-surface);
+  border: 1px solid var(--psc-line);
+  border-radius: var(--psc-radius);
+  padding: .9rem 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.psc-search { position: relative; flex: 1 1 15rem; }
+.psc-search .psc-icon {
+  position: absolute;
+  left: .7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--psc-muted);
+  pointer-events: none;
+}
+.psc-search .form-control { padding-left: 2.1rem; }
+
+.psc-chipset { display: flex; flex-wrap: wrap; gap: .35rem; border: 0; padding: 0; margin: 0; }
+
+.psc-chip {
+  --tone: var(--psc-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  border: 1px solid var(--psc-line);
+  border-radius: 999px;
+  padding: .2rem .7rem;
+  font-size: .84rem;
+  cursor: pointer;
+  opacity: .55;
+  user-select: none;
+  color: var(--psc-ink);
+  background: transparent;
+}
+.psc-chip::before {
+  content: "";
+  width: .6rem;
+  height: .6rem;
+  border-radius: 50%;
+  background: var(--tone);
+}
+.psc-chip-plain::before { display: none; }
+.psc-chip:hover { opacity: .85; }
+.btn-check:checked + .psc-chip {
+  opacity: 1;
+  border-color: var(--tone);
+  background: color-mix(in srgb, var(--tone) 12%, transparent);
+  font-weight: 500;
+}
+.btn-check:checked + .psc-chip-plain { border-color: var(--psc-red); color: var(--psc-red); background: var(--psc-accent-soft); }
+.btn-check:focus-visible + .psc-chip { outline: 2px solid var(--psc-red); outline-offset: 2px; }
+
+.psc-filter-actions { display: flex; align-items: center; gap: .75rem; margin-left: auto; }
+
+.psc-ics {
+  font-size: .84rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.psc-busy { opacity: 0; transition: opacity .15s; }
+.htmx-request .psc-busy, .psc-busy.htmx-request { opacity: 1; }
+
+/* ---------- liste du calendrier ---------- */
+
+.psc-result-count {
+  font-size: .84rem;
+  color: var(--psc-muted);
+  margin-bottom: .75rem;
+}
+
+.psc-month { margin-bottom: 2rem; }
+
+.psc-month-title {
+  position: sticky;
+  top: 3.6rem;
+  z-index: 2;
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  font-weight: 700;
+  color: var(--psc-muted);
+  background: var(--psc-ground);
+  padding: .5rem 0;
+  margin: 0 0 .5rem;
+  border-bottom: 1px solid var(--psc-line);
+}
+
+.psc-edition-list { display: flex; flex-direction: column; gap: .6rem; }
+.psc-edition-list-tight { gap: .4rem; }
+
+.psc-edition {
+  display: grid;
+  grid-template-columns: 3.2rem 1fr auto;
+  gap: 0 1rem;
+  align-items: center;
+  background: var(--psc-surface);
+  border: 1px solid var(--psc-line);
+  border-radius: var(--psc-radius);
+  padding: .8rem 1rem;
+  box-shadow: var(--psc-shadow);
+}
+
+.psc-edition.is-provisional { border-style: dashed; }
+.psc-edition.is-canceled { opacity: .6; }
+.psc-edition.is-canceled .psc-edition-title a { text-decoration: line-through; }
+
+.psc-date {
+  text-align: center;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.psc-date-day { display: block; font-size: 1.5rem; font-weight: 700; letter-spacing: -.03em; }
+.psc-date-month { display: block; font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--psc-muted); }
+
+.psc-edition-tags { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: .2rem; }
+
+.psc-badge {
+  --tone: var(--psc-muted);
+  display: inline-block;
+  background: var(--tone);
+  border-radius: 4px;
+  padding: .08rem .45rem;
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .01em;
+}
+
+.psc-flag {
+  display: inline-block;
+  border: 1px solid var(--psc-line);
+  border-radius: 4px;
+  padding: .05rem .4rem;
+  font-size: .7rem;
+  color: var(--psc-muted);
+  text-transform: lowercase;
+}
+.psc-flag-canceled { border-color: var(--psc-red); color: var(--psc-red); }
+
+.psc-edition-title { font-size: 1rem; font-weight: 600; margin: 0; }
+.psc-edition-title a { text-decoration: none; color: var(--psc-ink); }
+.psc-edition-title a:hover { color: var(--psc-red); }
+
+.psc-edit {
+  color: var(--psc-muted);
+  text-decoration: none;
+  font-size: .8em;
+  opacity: .65;
+}
+.psc-edit:hover { color: var(--psc-red); opacity: 1; }
+.psc-edit .psc-icon { margin-right: 0; }
+
+.psc-edition-meta {
+  font-size: .84rem;
+  color: var(--psc-muted);
+  margin: .1rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem;
+  align-items: center;
+}
+.psc-sep { opacity: .5; }
+.psc-soon { color: var(--psc-red); font-weight: 500; }
+
+.psc-formats { margin: .35rem 0 0; display: flex; flex-wrap: wrap; gap: .3rem; }
+.psc-format {
+  font-size: .74rem;
+  border: 1px solid var(--psc-line);
+  border-radius: 4px;
+  padding: .05rem .4rem;
+  color: var(--psc-muted);
+}
+
+.psc-edition-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+/* ---------- prédictions et corbeille ---------- */
+
+/* Une prédiction n'est pas une épreuve : elle est en attente d'un geste. */
+.psc-edition.is-prediction {
+  border-style: dashed;
+  background: transparent;
+  box-shadow: none;
+}
+.psc-edition.is-prediction .psc-date,
+.psc-edition.is-prediction .psc-edition-title { opacity: .75; }
+
+.psc-flag-guess { border-style: dashed; }
+
+.psc-guess-count { color: var(--psc-muted); }
+
+.psc-edition.is-removed {
+  border-style: dashed;
+  background: var(--psc-accent-soft);
+  align-items: center;
+}
+
+/* ---------- actions nommées ----------
+   Un menu replié derrière trois points ne se trouve pas. Les actions sont
+   écrites, discrètes mais lisibles, et se replient sur plusieurs lignes. */
+
+.psc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem .9rem;
+  margin: .5rem 0 0;
+}
+
+.psc-action {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  font-size: .84rem;
+  color: var(--psc-muted);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  cursor: pointer;
+}
+.psc-action:hover { color: var(--psc-red); border-bottom-color: currentColor; }
+.psc-action-danger:hover { color: var(--psc-red); }
+
+/* ---------- écrans du club ---------- */
+
+.psc-subnav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .25rem;
+  border-bottom: 1px solid var(--psc-line);
+  margin-bottom: 1.5rem;
+}
+.psc-subnav a {
+  padding: .45rem .8rem;
+  font-size: .9rem;
+  text-decoration: none;
+  color: var(--psc-ink);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.psc-subnav a:hover { color: var(--psc-red); }
+.psc-subnav a.is-current {
+  color: var(--psc-red);
+  border-bottom-color: var(--psc-red);
+  font-weight: 600;
+}
+
+.psc-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: .75rem;
+}
+.psc-tile {
+  display: block;
+  background: var(--psc-surface);
+  border: 1px solid var(--psc-line);
+  border-radius: var(--psc-radius);
+  padding: 1.1rem 1.2rem;
+  text-decoration: none;
+  color: var(--psc-ink);
+  box-shadow: var(--psc-shadow);
+}
+.psc-tile:hover { border-color: var(--psc-red); color: var(--psc-ink); }
+.psc-tile-n {
+  display: block;
+  font-size: 1.9rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--psc-red);
+}
+.psc-tile-l {
+  display: block;
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--psc-muted);
+  margin: .3rem 0 .5rem;
+}
+.psc-tile-d { display: block; font-size: .88rem; color: var(--psc-muted); }
+
+.psc-rows { display: flex; flex-direction: column; gap: .4rem; }
+
+.psc-row {
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+  background: var(--psc-surface);
+  border: 1px solid var(--psc-line);
+  border-radius: var(--psc-radius);
+  padding: .7rem 1rem;
+}
+.psc-row-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: .1rem; }
+.psc-row-main > .psc-form-grid { width: 100%; }
+.psc-row-actions { display: flex; align-items: center; gap: .8rem; flex-wrap: wrap; }
+.psc-row-editing { border-color: var(--psc-red); align-items: flex-end; flex-wrap: wrap; }
+.psc-row-muted { opacity: .6; }
+.psc-row-removed { border-style: dashed; background: var(--psc-accent-soft); }
+.psc-row-warn { font-size: .84rem; color: var(--psc-red); margin-top: .3rem; }
+
+.psc-swatch {
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 4px;
+  border: 1px solid var(--psc-line);
+  flex: none;
+}
+
+.psc-count-link {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--psc-muted);
+  font: inherit;
+  text-decoration: underline dotted;
+  cursor: pointer;
+}
+.psc-count-link:hover { color: var(--psc-red); }
+
+/* ---------- formulaire d'épreuve ---------- */
+
+.psc-edition-form {
+  background: var(--psc-surface);
+  border: 1px solid var(--psc-red);
+  border-radius: var(--psc-radius);
+  padding: 1.1rem 1.25rem 1.25rem;
+  margin-bottom: .6rem;
+  box-shadow: var(--psc-shadow);
+}
+
+.psc-form-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: .9rem;
+}
+
+.psc-close {
+  border: 0;
+  background: transparent;
+  color: var(--psc-muted);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 .25rem;
+}
+.psc-close:hover { color: var(--psc-red); }
+
+.psc-field { margin-bottom: .85rem; }
+.psc-field .form-text { font-size: .8rem; color: var(--psc-muted); }
+.psc-field .errorlist {
+  list-style: none;
+  padding: 0;
+  margin: .25rem 0 0;
+  font-size: .84rem;
+  color: var(--psc-red);
+}
+
+.psc-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0 1rem;
+}
+
+.psc-form-actions {
+  display: flex;
+  gap: .5rem;
+  margin-top: 1rem;
+  padding-top: .9rem;
+  border-top: 1px solid var(--psc-line);
+}
+
+.psc-more-fields > summary { margin-bottom: .3rem; }
+
+/* ---------- participation ---------- */
+
+.psc-participation {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.psc-join { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+.psc-join .form-select { width: auto; min-width: 8.5rem; }
+
+.psc-mine {
+  display: inline-flex;
+  align-items: center;
+  font-size: .82rem;
+  font-weight: 500;
+  color: #1d7a4d;
+  background: rgba(29, 122, 77, .1);
+  border-radius: 999px;
+  padding: .15rem .6rem;
+}
+[data-bs-theme="dark"] .psc-mine { color: #5cbb8d; background: rgba(92, 187, 141, .14); }
+
+.psc-count {
+  display: inline-flex;
+  align-items: center;
+  font-size: .82rem;
+  color: var(--psc-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.psc-people { list-style: none; padding: 0; margin: .5rem 0 0; display: flex; flex-wrap: wrap; gap: .5rem; }
+.psc-people li {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  border: 1px solid var(--psc-line);
+  border-radius: 999px;
+  padding: .15rem .6rem .15rem .2rem;
+  font-size: .85rem;
+}
+
+/* ---------- listes diverses ---------- */
+
+.psc-mini-list, .psc-encourage, .psc-format-list { list-style: none; padding: 0; margin: 0; }
+.psc-mini-list li, .psc-format-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  align-items: baseline;
+  padding: .45rem 0;
+  border-bottom: 1px solid var(--psc-line);
+}
+.psc-mini-list li:last-child, .psc-format-list li:last-child { border-bottom: 0; }
+.psc-inline-link { font-size: .82rem; margin-left: auto; }
+
+.psc-encourage li { display: flex; gap: .5rem; padding: .35rem 0; align-items: baseline; }
+
+.psc-news { display: grid; gap: .75rem; margin-bottom: 1.5rem; }
+.psc-news article {
+  background: var(--psc-accent-soft);
+  border-radius: var(--psc-radius);
+  padding: .9rem 1.1rem;
+}
+
+.psc-quote { margin: 0 0 .9rem; padding-left: .8rem; border-left: 3px solid var(--psc-line); font-size: .9rem; }
+.psc-quote footer { font-size: .8rem; color: var(--psc-muted); }
+.psc-score-detail { list-style: none; padding: 0; margin: .3rem 0; display: flex; flex-wrap: wrap; gap: .6rem; font-size: .78rem; color: var(--psc-muted); }
+
+.psc-empty {
+  background: var(--psc-surface);
+  border: 1px dashed var(--psc-line);
+  border-radius: var(--psc-radius);
+  padding: 2rem 1.25rem;
+  text-align: center;
+  color: var(--psc-muted);
+}
+.psc-empty h2 { color: var(--psc-ink); }
+
+/* ---------- étoiles ---------- */
+
+.psc-rating { position: relative; display: inline-block; line-height: 1; letter-spacing: .1em; }
+.psc-rating-track { color: var(--psc-line); }
+.psc-rating-fill {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  color: #f0a500;
+}
+.psc-rating-value { font-size: .8rem; font-weight: 600; margin-left: .35rem; }
+.psc-rating-count { font-size: .78rem; color: var(--psc-muted); margin-left: .2rem; }
+
+/* ---------- évaluation ---------- */
+
+.psc-score-row { border: 0; padding: .5rem 0; border-bottom: 1px solid var(--psc-line); display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; justify-content: space-between; }
+.psc-score-row legend { float: none; width: auto; font-size: .95rem; margin: 0; }
+.psc-score-choices { display: flex; gap: .3rem; }
+.psc-score-btn {
+  border: 1px solid var(--psc-line);
+  border-radius: 6px;
+  width: 2.2rem;
+  height: 2.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+.btn-check:checked + .psc-score-btn { background: var(--psc-red); border-color: var(--psc-red); color: #fff; font-weight: 600; }
+.btn-check:focus-visible + .psc-score-btn { outline: 2px solid var(--psc-red); outline-offset: 2px; }
+
+/* ---------- sélection de membre ---------- */
+
+.psc-member-grid { display: flex; flex-wrap: wrap; gap: .4rem; max-height: 16rem; overflow-y: auto; }
+.psc-member-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  border: 1px solid var(--psc-line);
+  background: transparent;
+  color: var(--psc-ink);
+  border-radius: 999px;
+  padding: .2rem .8rem .2rem .25rem;
+  font-size: .9rem;
+  cursor: pointer;
+}
+.psc-member-chip:hover { border-color: var(--psc-red); color: var(--psc-red); }
+.psc-summary { cursor: pointer; font-size: .9rem; color: var(--psc-muted); }
+
+/* ---------- graphique ---------- */
+
+.psc-chart-wrap { position: relative; height: 320px; }
+
+/* ---------- pied de page ---------- */
+
+.psc-footer {
+  border-top: 1px solid var(--psc-line);
+  background: var(--psc-surface);
+  padding: 1.25rem 0;
+  margin-top: 3rem;
+  font-size: .85rem;
+  color: var(--psc-muted);
+}
+.psc-footer a { text-decoration: none; }
+
+/* ---------- mobile ---------- */
+
+@media (max-width: 640px) {
+  .psc-edition {
+    grid-template-columns: 2.8rem 1fr;
+    row-gap: .6rem;
+  }
+  .psc-edition-side { grid-column: 1 / -1; }
+  .psc-participation { justify-content: flex-start; }
+  .psc-month-title { top: 3.4rem; }
+  .psc-filter-actions { margin-left: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+}
+
+:focus-visible { outline: 2px solid var(--psc-red); outline-offset: 2px; }

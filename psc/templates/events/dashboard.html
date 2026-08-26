@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% load psc static %}
+{% block title %}Tableau de bord{% endblock %}
+
+{% block content %}
+<div class="psc-page-head">
+  <div>
+    <p class="psc-eyebrow">Paris Sport Club</p>
+    <h1 class="psc-title">
+      {% if current_member %}Bonjour {{ current_member.first_name }}{% else %}Calendrier des courses{% endif %}
+    </h1>
+  </div>
+  <a class="btn btn-psc" href="{% url 'events:calendar_year' year %}">Voir le calendrier {{ year }}</a>
+</div>
+
+{% if news %}
+  <div class="psc-news">
+    {% for entry in news %}
+      <article>
+        <h2 class="h6 mb-1">{{ entry.title }}</h2>
+        <p class="mb-1">{{ entry.body|linebreaksbr }}</p>
+        <p class="psc-muted mb-0">{{ entry.published_at|date:"j F Y" }}</p>
+      </article>
+    {% endfor %}
+  </div>
+{% endif %}
+
+{% if not has_any_edition %}
+  <div class="psc-empty mb-4">
+    <h2 class="h5">Le calendrier est vide</h2>
+    <p>Les courses et leurs éditions se saisissent dans l'administration du club, puis apparaissent ici.</p>
+    <a class="btn btn-sm btn-psc" href="{% url 'events:calendar_year' year %}">Ajouter une course</a>
+  </div>
+{% endif %}
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <section class="psc-card">
+      <h2 class="psc-card-title">Prochaines épreuves</h2>
+      <div class="psc-edition-list psc-edition-list-tight">
+        {% for edition in upcoming %}
+          {% include "events/_edition_card.html" %}
+        {% empty %}
+          <p class="psc-muted mb-0">Aucune épreuve à venir pour l'instant.</p>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+
+  <div class="col-lg-5">
+    <section class="psc-card">
+      <h2 class="psc-card-title">Cette semaine</h2>
+      {% if encouragements %}
+        <p class="psc-muted">On encourage :</p>
+        <ul class="psc-encourage">
+          {% for edition, members in encouragements.items %}
+            <li>
+              <svg class="psc-icon" aria-hidden="true"><use href="{% if members|length > 1 %}#i-users{% else %}#i-user{% endif %}"/></svg>
+              <span>
+                {% for member in members %}<strong>{{ member.first_name }}</strong>{% if not forloop.last %}, {% endif %}{% endfor %}
+                {% if members|length > 1 %}participent{% else %}participe{% endif %}
+                {% countdown edition as soon %}{% if soon %}<span class="psc-soon">{{ soon }}</span>{% endif %}
+                à <a href="{{ edition.get_absolute_url }}">{{ edition.event.name }}</a>
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="psc-muted mb-0">C'est calme, personne ne participe à une épreuve dans les sept prochains jours.</p>
+      {% endif %}
+    </section>
+
+    {% if my_next %}
+      <section class="psc-card mt-4">
+        <h2 class="psc-card-title">Mes prochaines courses</h2>
+        <ul class="psc-mini-list">
+          {% for participation in my_next %}
+            <li>
+              <a href="{{ participation.edition.get_absolute_url }}">{{ participation.edition.event.name }}</a>
+              <span class="psc-muted">{% date_range participation.edition %}{% if participation.format %} · {{ participation.format.name }}{% endif %}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      </section>
+    {% endif %}
+
+    {% if recent_feedbacks %}
+      <section class="psc-card mt-4">
+        <h2 class="psc-card-title">Évaluations récentes</h2>
+        {% for feedback in recent_feedbacks %}
+          <blockquote class="psc-quote">
+            <p class="mb-1">{% rating feedback.average_score %}</p>
+            {% if feedback.comment %}<p class="mb-1">{{ feedback.comment|truncatechars:120 }}</p>{% endif %}
+            <footer>
+              {{ feedback.member.first_name }} sur
+              <a href="{{ feedback.edition.get_absolute_url }}">{{ feedback.edition.event.name }} {{ feedback.edition.year }}</a>
+            </footer>
+          </blockquote>
+        {% endfor %}
+      </section>
+    {% endif %}
+  </div>
+</div>
+
+<section class="psc-card mt-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-baseline gap-2">
+    <h2 class="psc-card-title mb-0">Inscriptions par mois</h2>
+    <span class="psc-muted small">{{ year }}</span>
+  </div>
+  <div class="psc-chart-wrap">
+    <canvas id="psc-chart" data-url="{% url 'events:stats_json' %}?year={{ year }}"
+            aria-label="Nombre d'inscriptions par mois et par discipline" role="img"></canvas>
+  </div>
+  <p id="psc-chart-empty" class="psc-muted d-none mb-0">Aucune inscription enregistrée pour {{ year }}.</p>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'vendor/chart.umd.min.js' %}"></script>
+<script src="{% static 'js/psc-chart.js' %}"></script>
+{% endblock %}

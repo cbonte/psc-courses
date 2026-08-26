@@ -1,0 +1,14 @@
+{% if participations %}
+  <ul class="psc-people">
+    {% for participation in participations %}
+      <li>
+        <span class="psc-avatar">{{ participation.member.initials }}</span>
+        <span>{{ participation.member.full_name }}</span>
+        {% if participation.format %}<span class="psc-muted small">{{ participation.format.name }}</span>{% endif %}
+        {% if participation.status == 'interested' %}<span class="psc-flag">intéressé</span>{% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="psc-muted small mb-0">Personne d'inscrit pour l'instant.</p>
+{% endif %}

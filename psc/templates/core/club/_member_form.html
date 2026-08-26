@@ -1,0 +1,21 @@
+<form class="psc-row psc-row-editing" id="member-{{ object.pk }}"
+      hx-post="{% url 'core:member_edit' object.pk %}"
+      hx-target="#member-{{ object.pk }}" hx-swap="outerHTML">
+  {% csrf_token %}
+  <div class="psc-row-main psc-form-grid">
+    {% for field in form %}
+      <div class="psc-field">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+        {{ field.errors }}
+      </div>
+    {% endfor %}
+  </div>
+  <div class="psc-row-actions">
+    <button type="submit" class="btn btn-sm btn-psc">Enregistrer</button>
+    <button type="button" class="psc-action"
+            hx-get="{% url 'core:member_row' object.pk %}"
+            hx-target="#member-{{ object.pk }}" hx-swap="outerHTML">Annuler</button>
+  </div>
+</form>

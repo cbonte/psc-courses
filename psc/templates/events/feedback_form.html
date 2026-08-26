@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load psc %}
+{% block title %}Évaluer {{ edition.event.name }}{% endblock %}
+
+{% block content %}
+<div class="psc-page-head">
+  <div>
+    <p class="psc-eyebrow"><a href="{{ edition.event.get_absolute_url }}">{{ edition.event.name }}</a></p>
+    <h1 class="psc-title">Évaluation {{ edition.year }}</h1>
+  </div>
+</div>
+
+{% if not form %}
+  <div class="psc-empty">
+    <h2 class="h5">Dites-nous qui vous êtes</h2>
+    <p>Une évaluation est signée par son auteur.</p>
+    <button class="btn btn-psc" hx-get="{% url 'core:identity_picker' %}"
+            hx-target="#identity-modal-body" hx-swap="innerHTML"
+            data-bs-toggle="modal" data-bs-target="#identity-modal">Qui es-tu ?</button>
+  </div>
+{% else %}
+  <form method="post" class="psc-card">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    {% for criterion, field in form.criterion_fields %}
+      <fieldset class="psc-score-row">
+        <legend>{{ criterion.label }}</legend>
+        <div class="psc-score-choices">
+          {% for radio in field %}
+            {{ radio.tag }}
+            <label class="psc-score-btn" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+          {% endfor %}
+        </div>
+      </fieldset>
+    {% empty %}
+      <p class="psc-muted">Aucun critère d'évaluation n'est configuré. Le commentaire reste possible.</p>
+    {% endfor %}
+
+    <div class="mt-3">
+      <label class="form-label" for="{{ form.comment.id_for_label }}">Commentaire</label>
+      {{ form.comment }}
+    </div>
+
+    <div class="mt-3 d-flex gap-2">
+      <button type="submit" class="btn btn-psc">Enregistrer</button>
+      <a class="btn psc-btn-quiet" href="{{ edition.get_absolute_url }}">Annuler</a>
+    </div>
+  </form>
+{% endif %}
+{% endblock %}

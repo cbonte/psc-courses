@@ -1,0 +1,19 @@
+<div class="psc-row" id="discipline-{{ object.pk }}">
+  <span class="psc-swatch" style="background: {{ object.color }}" aria-hidden="true"></span>
+  <div class="psc-row-main">
+    <strong>{{ object.label }}</strong>
+    <span class="psc-muted small">{{ object.slug }} · {{ object.color }} · ordre {{ object.position }}</span>
+    {% if blocked %}
+      <p class="psc-row-warn mb-0">Impossible de supprimer : {{ object.uses }} course{{ object.uses|pluralize }} utilise{{ object.uses|pluralize:",nt" }} encore cette discipline.</p>
+    {% endif %}
+  </div>
+  <div class="psc-row-actions">
+    <span class="psc-muted small">{{ object.uses }} course{{ object.uses|pluralize }}</span>
+    <button type="button" class="psc-action"
+            hx-get="{% url 'core:discipline_edit' object.pk %}"
+            hx-target="#discipline-{{ object.pk }}" hx-swap="outerHTML">Modifier</button>
+    <button type="button" class="psc-action psc-action-danger"
+            hx-post="{% url 'core:discipline_delete' object.pk %}"
+            hx-target="#discipline-{{ object.pk }}" hx-swap="outerHTML">Supprimer</button>
+  </div>
+</div>

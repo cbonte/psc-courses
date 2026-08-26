@@ -1,0 +1,18 @@
+<div class="psc-row" id="criterion-{{ object.pk }}">
+  <div class="psc-row-main">
+    <strong>{{ object.label }}</strong>
+    <span class="psc-muted small">ordre {{ object.position }}{% if not object.is_active %} · plus proposé{% endif %}</span>
+    {% if blocked %}
+      <p class="psc-row-warn mb-0">Impossible de supprimer : {{ object.uses }} note{{ object.uses|pluralize }} porte{{ object.uses|pluralize:",nt" }} sur ce critère. Décochez « proposé aux membres » pour le retirer des formulaires sans perdre l'historique.</p>
+    {% endif %}
+  </div>
+  <div class="psc-row-actions">
+    <span class="psc-muted small">{{ object.uses }} note{{ object.uses|pluralize }}</span>
+    <button type="button" class="psc-action"
+            hx-get="{% url 'core:criterion_edit' object.pk %}"
+            hx-target="#criterion-{{ object.pk }}" hx-swap="outerHTML">Modifier</button>
+    <button type="button" class="psc-action psc-action-danger"
+            hx-post="{% url 'core:criterion_delete' object.pk %}"
+            hx-target="#criterion-{{ object.pk }}" hx-swap="outerHTML">Supprimer</button>
+  </div>
+</div>

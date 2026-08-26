@@ -1,0 +1,38 @@
+{% load psc %}
+<div id="participation-{{ edition.pk }}" class="psc-participation">
+  {% with mine=my_participations|lookup:edition.pk %}
+    {% if edition.is_canceled %}
+      <span class="psc-flag psc-flag-canceled">Annulée</span>
+    {% elif mine %}
+      <span class="psc-mine">
+        <svg class="psc-icon" aria-hidden="true"><use href="#i-check"/></svg>
+        {% if mine == 'interested' %}Intéressé{% else %}Inscrit{% endif %}
+      </span>
+      <form hx-post="{% url 'events:participation' edition.pk %}"
+            hx-target="#participation-{{ edition.pk }}" hx-swap="outerHTML">
+        <input type="hidden" name="action" value="leave">
+        <button type="submit" class="btn btn-sm psc-btn-quiet">Me retirer</button>
+      </form>
+    {% else %}
+      <form hx-post="{% url 'events:participation' edition.pk %}"
+            hx-target="#participation-{{ edition.pk }}" hx-swap="outerHTML"
+            class="psc-join">
+        {% if edition.formats.all %}
+          <label class="visually-hidden" for="format-{{ edition.pk }}">Format</label>
+          <select class="form-select form-select-sm" name="format" id="format-{{ edition.pk }}">
+            <option value="">Format à choisir</option>
+            {% for format in edition.formats.all %}
+              <option value="{{ format.pk }}">{{ format }}</option>
+            {% endfor %}
+          </select>
+        {% endif %}
+        <button type="submit" class="btn btn-sm btn-psc" name="status" value="registered">Je participe</button>
+      </form>
+    {% endif %}
+  {% endwith %}
+  {% if edition.participation_count %}
+    <span class="psc-count" title="Membres inscrits">
+      <svg class="psc-icon" aria-hidden="true"><use href="#i-users"/></svg>{{ edition.participation_count }}
+    </span>
+  {% endif %}
+</div>

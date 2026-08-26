@@ -1,0 +1,24 @@
+__pycache__/
+*.py[cod]
+
+# Environnements virtuels
+venv/
+.venv/
+
+# Secrets et configuration locale
+.env
+
+# Données et fichiers générés. Le répertoire est suivi, son contenu non :
+# SQLite ne crée pas le répertoire parent de sa base.
+/data/*
+!/data/.gitkeep
+/staticfiles/
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+
+# Outils
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/

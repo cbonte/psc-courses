@@ -1,0 +1,28 @@
+{% extends "core/club/base.html" %}
+{% block club_title %}Annonces{% endblock %}
+{% block club_heading %}Annonces{% endblock %}
+
+{% block club_content %}
+<p class="psc-muted">Les messages affichés en tête de la page d'accueil. Le texte est repris tel quel, les sauts de ligne sont conservés et le HTML est échappé.</p>
+
+<div class="psc-card mb-4">
+  <h2 class="psc-card-title">Écrire une annonce</h2>
+  <form method="post">
+    {% csrf_token %}
+    {% for field in form %}
+      <div class="psc-field {% if field.name == 'is_published' %}form-check{% endif %}">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+        {{ field.errors }}
+      </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-psc">Publier</button>
+  </form>
+</div>
+
+<div class="psc-rows">
+  {% for object in objects %}{% include "core/club/_news_row.html" %}{% endfor %}
+  {% if not objects %}<div class="psc-empty"><p class="mb-0">Aucune annonce.</p></div>{% endif %}
+</div>
+{% endblock %}

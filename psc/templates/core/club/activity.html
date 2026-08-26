@@ -1,0 +1,24 @@
+{% extends "core/club/base.html" %}
+{% block club_title %}Journal{% endblock %}
+{% block club_heading %}Journal{% endblock %}
+
+{% block club_content %}
+<p class="psc-muted">Tout le monde peut modifier le calendrier. Ce journal dit qui a fait quoi, et quand. Il ne se modifie pas.</p>
+
+<div class="psc-rows">
+  {% for entry in entries %}
+    <div class="psc-row">
+      <div class="psc-row-main">
+        <strong>{% if entry.member %}{{ entry.member.full_name }}{% else %}Quelqu'un{% endif %}</strong>
+        <span class="psc-muted small">{{ entry.get_action_display }} · {{ entry.created_at|date:"j F Y à H:i" }}</span>
+        <p class="mb-0 small">
+          {% if entry.url %}<a href="{{ entry.url }}">{{ entry.label }}</a>{% else %}{{ entry.label }}{% endif %}
+          {% if entry.detail %}<span class="psc-muted"> — {{ entry.detail }}</span>{% endif %}
+        </p>
+      </div>
+    </div>
+  {% empty %}
+    <div class="psc-empty"><p class="mb-0">Rien encore.</p></div>
+  {% endfor %}
+</div>
+{% endblock %}

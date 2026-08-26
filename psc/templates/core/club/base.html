@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}{% block club_title %}Le club{% endblock %}{% endblock %}
+
+{% block content %}
+<div class="psc-page-head">
+  <div>
+    <p class="psc-eyebrow">Paris Sport Club</p>
+    <h1 class="psc-title">{% block club_heading %}Le club{% endblock %}</h1>
+  </div>
+</div>
+
+<nav class="psc-subnav" aria-label="Réglages du club">
+  <a class="{% if section == 'hub' %}is-current{% endif %}" href="{% url 'core:club' %}">Vue d'ensemble</a>
+  <a class="{% if section == 'disciplines' %}is-current{% endif %}" href="{% url 'core:disciplines' %}">Disciplines</a>
+  <a class="{% if section == 'criteria' %}is-current{% endif %}" href="{% url 'core:criteria' %}">Critères d'évaluation</a>
+  <a class="{% if section == 'news' %}is-current{% endif %}" href="{% url 'core:news' %}">Annonces</a>
+  <a class="{% if section == 'members' %}is-current{% endif %}" href="{% url 'core:members' %}">Membres</a>
+  <a class="{% if section == 'trash' %}is-current{% endif %}" href="{% url 'events:trash' %}">Corbeille</a>
+  <a class="{% if section == 'activity' %}is-current{% endif %}" href="{% url 'core:activity' %}">Journal</a>
+</nav>
+
+{% block club_content %}{% endblock %}
+{% endblock %}

@@ -1,0 +1,31 @@
+{% load psc %}
+<div id="calendar-results">
+  <p class="psc-result-count">
+    {% if edition_count %}{{ edition_count }} épreuve{{ edition_count|pluralize }} inscrite{{ edition_count|pluralize }} en {{ year }}{% else %}Aucune épreuve inscrite{% endif %}
+    {% if prediction_count %}
+      <span class="psc-sep">·</span>
+      <span class="psc-guess-count">{{ prediction_count }} attendue{{ prediction_count|pluralize }} d'après les saisons passées</span>
+    {% endif %}
+  </p>
+
+  {% for month, editions in months %}
+    <section class="psc-month">
+      <h2 class="psc-month-title">{{ month|capfirst }}</h2>
+      <div class="psc-edition-list">
+        {% for edition in editions %}
+          {% include "events/_edition_card.html" %}
+        {% endfor %}
+      </div>
+    </section>
+  {% empty %}
+    <div class="psc-empty">
+      <h2 class="h5">Rien à afficher</h2>
+      {% if query or selected_disciplines or selected_statuses or mine %}
+        <p>Aucune épreuve de {{ year }} ne correspond à ces filtres.</p>
+        <a class="btn btn-sm psc-btn-quiet" href="{% url 'events:calendar_year' year %}">Effacer les filtres</a>
+      {% else %}
+        <p>Le calendrier {{ year }} est vide. Les courses se saisissent dans l'administration du club.</p>
+      {% endif %}
+    </div>
+  {% endfor %}
+</div>
