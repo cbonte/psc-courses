@@ -1,7 +1,8 @@
-<div class="psc-row" id="criterion-{{ object.pk }}">
+<div class="psc-row" id="criterion-{{ object.pk }}" data-pk="{{ object.pk }}">
+  {% include "core/club/_handle.html" with move_url="core:criterion_move" %}
   <div class="psc-row-main">
     <strong>{{ object.label }}</strong>
-    <span class="psc-muted small">ordre {{ object.position }}{% if not object.is_active %} · plus proposé{% endif %}</span>
+    <span class="psc-muted small">{% if object.is_active %}proposé aux membres{% else %}plus proposé{% endif %}</span>
     {% if blocked %}
       <p class="psc-row-warn mb-0">Impossible de supprimer : {{ object.uses }} note{{ object.uses|pluralize }} porte{{ object.uses|pluralize:",nt" }} sur ce critère. Décochez « proposé aux membres » pour le retirer des formulaires sans perdre l'historique.</p>
     {% endif %}

@@ -15,29 +15,28 @@ SELECT = {"class": "form-select"}
 
 
 class DisciplineForm(forms.ModelForm):
+    """L'ordre ne se saisit plus : il se règle en déplaçant les lignes."""
+
     class Meta:
         model = Discipline
-        fields = ["label", "slug", "color", "position"]
+        fields = ["label", "slug", "color"]
         widgets = {
             "label": forms.TextInput(attrs=TEXT),
             "slug": forms.TextInput(attrs={**TEXT, "placeholder": "tri"}),
             "color": forms.TextInput(attrs={"class": "form-control form-control-color",
                                             "type": "color"}),
-            "position": forms.NumberInput(attrs={**TEXT, "step": 10}),
         }
         help_texts = {
             "slug": "Identifiant court, sans accent ni espace. Sert aux filtres du calendrier.",
-            "position": "Plus le nombre est petit, plus la discipline apparaît tôt.",
         }
 
 
 class FeedbackCriterionForm(forms.ModelForm):
     class Meta:
         model = FeedbackCriterion
-        fields = ["label", "position", "is_active"]
+        fields = ["label", "is_active"]
         widgets = {
             "label": forms.TextInput(attrs=TEXT),
-            "position": forms.NumberInput(attrs={**TEXT, "step": 10}),
             "is_active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
         }
 

@@ -1,0 +1,50 @@
+{% comment %}
+Histogramme empilé, rendu en HTML. Les libellés sont du texte ordinaire :
+ils ne rétrécissent pas avec le graphique, contrairement au texte d'un SVG
+mis à l'échelle. Aucune bibliothèque, aucun JavaScript.
+{% endcomment %}
+<figure class="psc-chart">
+  <div class="psc-chart-plot" role="group"
+       aria-label="Inscriptions par mois et par discipline en {{ chart.year }}">
+    {% if chart.top %}<span class="psc-chart-top" aria-hidden="true">{{ chart.top }}</span>{% endif %}
+    {% for column in chart.columns %}
+      <div class="psc-chart-col" title="{{ column.caption }}">
+        <span class="psc-chart-count" aria-hidden="true">{{ column.total|default_if_none:"" }}</span>
+        <span class="psc-chart-track">
+          <span class="psc-chart-stack" style="height: {{ column.percent|floatformat:'1u' }}%">
+            {% for part in column.slices %}
+              <span class="psc-chart-slice"
+                    style="height: {{ part.percent|floatformat:'1u' }}%; background: {{ part.color }}"></span>
+            {% endfor %}
+          </span>
+        </span>
+        <span class="psc-chart-month">{{ column.label }}</span>
+        <span class="visually-hidden">{{ column.caption }}</span>
+      </div>
+    {% endfor %}
+  </div>
+
+  {% if chart.is_empty %}
+    <p class="psc-chart-note">Aucune inscription enregistrée pour {{ chart.year }}.</p>
+  {% else %}
+    <figcaption class="psc-chart-legend">
+      {% for entry in chart.legend %}
+        <span class="psc-chart-key">
+          <span class="psc-chart-dot" style="background: {{ entry.color }}"></span>{{ entry.label }}
+        </span>
+      {% endfor %}
+    </figcaption>
+
+    <table class="visually-hidden">
+      <caption>Inscriptions par mois et par discipline en {{ chart.year }}</caption>
+      <thead>
+        <tr><th scope="col">Discipline</th>{% for column in chart.columns %}<th scope="col">{{ column.label }}</th>{% endfor %}<th scope="col">Total</th></tr>
+      </thead>
+      <tbody>
+        {% for row in chart.rows %}
+          <tr><th scope="row">{{ row.label }}</th>{% for value in row.data %}<td>{{ value }}</td>{% endfor %}<td>{{ row.total }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</figure>

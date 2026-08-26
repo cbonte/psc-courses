@@ -98,3 +98,10 @@ def lookup(mapping, key):
     if not mapping:
         return None
     return mapping.get(key)
+
+
+@register.filter
+def chart_month_x(index, chart):
+    """Abscisse du libellé d'un mois, au centre de sa colonne."""
+    slot = (chart.width - 34) / 12
+    return round(34 + slot * (index + 0.5), 1)

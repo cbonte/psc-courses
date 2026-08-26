@@ -1,4 +1,5 @@
 import datetime
+import re
 
 from django.urls import reverse
 from django.utils import timezone
@@ -301,3 +302,222 @@ class NamedActionsTests(PscTestCase):
         self.assertContains(response, "Confirmer le")
         # « Inscrire » est le verbe de la participation : il ne doit pas servir ici.
         self.assertNotContains(response, "Inscrire le")
+
+
+class ReorderTests(PscTestCase):
+    """L'ordre se règle en déplaçant, jamais en saisissant un nombre."""
+
+    def setUp(self):
+        super().setUp()
+        self.declare(self.make_member())
+        self.a = Discipline.objects.create(slug="a", label="Alpha", position=10)
+        self.b = Discipline.objects.create(slug="b", label="Beta", position=20)
+        self.c = Discipline.objects.create(slug="c", label="Gamma", position=30)
+
+    def _order(self):
+        return [d.slug for d in Discipline.objects.order_by("position", "pk")]
+
+    def _rendered_order(self, url=None):
+        """L'ordre réellement affiché, seul juge utile.
+
+        Les tests précédents ne regardaient que la base : ils passaient alors
+        que la page sortait dans un ordre arbitraire, annotate() faisant
+        abandonner Meta.ordering à Django.
+        """
+        body = self.client.get(url or reverse("core:disciplines")).content.decode()
+        return re.findall(r'id="discipline-(\d+)"', body)
+
+    def _stored_order(self):
+        return [str(d.pk) for d in Discipline.objects.order_by("position", "pk")]
+
+    def test_the_forms_no_longer_ask_for_a_position(self):
+        for url in (reverse("core:disciplines"), reverse("core:criteria")):
+            self.assertNotContains(self.client.get(url), 'name="position"', msg_prefix=url)
+
+    def test_moving_down_swaps_with_the_next(self):
+        self.client.post(reverse("core:discipline_move", args=[self.a.pk]),
+                         {"direction": "down"})
+        self.assertEqual(self._order(), ["b", "a", "c"])
+
+    def test_moving_up_swaps_with_the_previous(self):
+        self.client.post(reverse("core:discipline_move", args=[self.c.pk]), {"direction": "up"})
+        self.assertEqual(self._order(), ["a", "c", "b"])
+
+    def test_the_first_cannot_go_up(self):
+        self.client.post(reverse("core:discipline_move", args=[self.a.pk]), {"direction": "up"})
+        self.assertEqual(self._order(), ["a", "b", "c"])
+
+    def test_the_last_cannot_go_down(self):
+        self.client.post(reverse("core:discipline_move", args=[self.c.pk]),
+                         {"direction": "down"})
+        self.assertEqual(self._order(), ["a", "b", "c"])
+
+    def test_dropping_applies_the_whole_order(self):
+        self.client.post(
+            reverse("core:disciplines_reorder"),
+            {"order": [str(self.c.pk), str(self.a.pk), str(self.b.pk)]},
+        )
+        self.assertEqual(self._order(), ["c", "a", "b"])
+
+    def test_unknown_identifiers_are_ignored(self):
+        self.client.post(
+            reverse("core:disciplines_reorder"),
+            {"order": ["999999", str(self.c.pk), str(self.a.pk)]},
+        )
+        self.assertEqual(self._order()[:2], ["c", "a"])
+
+    def test_a_forgotten_element_keeps_a_place_at_the_end(self):
+        self.client.post(
+            reverse("core:disciplines_reorder"), {"order": [str(self.c.pk)]}
+        )
+        self.assertEqual(self._order()[0], "c")
+        self.assertEqual(sorted(self._order()), ["a", "b", "c"])
+
+    def test_positions_are_renumbered_regularly(self):
+        self.client.post(
+            reverse("core:disciplines_reorder"),
+            {"order": [str(self.b.pk), str(self.c.pk), str(self.a.pk)]},
+        )
+        self.assertEqual(
+            [d.position for d in Discipline.objects.order_by("position")], [10, 20, 30]
+        )
+
+    def test_reordering_needs_an_identity(self):
+        self.client.post(reverse("core:identity_clear"))
+        response = self.client.post(
+            reverse("core:disciplines_reorder"), {"order": [str(self.c.pk)]}
+        )
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(self._order(), ["a", "b", "c"])
+
+    def test_the_response_is_the_refreshed_list(self):
+        response = self.client.post(
+            reverse("core:discipline_move", args=[self.a.pk]), {"direction": "down"}
+        )
+        self.assertContains(response, 'id="sortable-disciplines"')
+        self.assertContains(response, "Alpha")
+
+    def test_the_ends_have_their_useless_button_disabled(self):
+        body = self.client.get(reverse("core:disciplines")).content.decode()
+        first = body[body.index(f'id="discipline-{self.a.pk}"'):]
+        first = first[: first.index("</div>")]
+        self.assertIn("disabled", first)
+
+    def test_criteria_reorder_the_same_way(self):
+        one = FeedbackCriterion.objects.create(label="Un", position=10)
+        two = FeedbackCriterion.objects.create(label="Deux", position=20)
+        self.client.post(reverse("core:criterion_move", args=[two.pk]), {"direction": "up"})
+        self.assertEqual(
+            [c.label for c in FeedbackCriterion.objects.order_by("position")], ["Deux", "Un"]
+        )
+        del one
+
+
+class RenderedOrderTests(PscTestCase):
+    """Ce que la page affiche doit être ce que la base enregistre."""
+
+    def setUp(self):
+        super().setUp()
+        self.declare(self.make_member())
+        self.items = [
+            Discipline.objects.create(slug=slug, label=slug.title(), position=(index + 1) * 10)
+            for index, slug in enumerate(["alpha", "beta", "gamma", "delta"])
+        ]
+
+    def _rendered(self, url):
+        body = self.client.get(url).content.decode()
+        return re.findall(r'id="(?:discipline|criterion)-(\d+)"', body)
+
+    def _stored(self, model):
+        return [str(o.pk) for o in model.objects.order_by("position", "pk")]
+
+    def test_the_disciplines_page_shows_the_stored_order(self):
+        self.assertEqual(
+            self._rendered(reverse("core:disciplines")), self._stored(Discipline)
+        )
+
+    def test_the_page_follows_a_move(self):
+        first = self.items[0]
+        self.client.post(reverse("core:discipline_move", args=[first.pk]), {"direction": "down"})
+        self.assertEqual(
+            self._rendered(reverse("core:disciplines")), self._stored(Discipline)
+        )
+        self.assertEqual(self._rendered(reverse("core:disciplines"))[1], str(first.pk))
+
+    def test_the_page_follows_a_drop(self):
+        wanted = [str(self.items[3].pk), str(self.items[0].pk),
+                  str(self.items[2].pk), str(self.items[1].pk)]
+        self.client.post(reverse("core:disciplines_reorder"), {"order": wanted})
+        self.assertEqual(self._rendered(reverse("core:disciplines")), wanted)
+
+    def test_the_fragment_returned_by_a_move_is_already_in_order(self):
+        first = self.items[0]
+        response = self.client.post(
+            reverse("core:discipline_move", args=[first.pk]), {"direction": "down"}
+        )
+        shown = re.findall(r'id="discipline-(\d+)"', response.content.decode())
+        self.assertEqual(shown, self._stored(Discipline))
+
+    def test_the_criteria_page_shows_the_stored_order(self):
+        for index, label in enumerate(["Un", "Deux", "Trois"]):
+            FeedbackCriterion.objects.create(label=label, position=(index + 1) * 10)
+        self.assertEqual(
+            self._rendered(reverse("core:criteria")), self._stored(FeedbackCriterion)
+        )
+
+    def test_the_calendar_filters_follow_the_same_order(self):
+        body = self.client.get(reverse("events:calendar"), follow=True).content.decode()
+        shown = re.findall(r'id="d-([\w-]+)"', body)
+        stored = [d.slug for d in Discipline.objects.order_by("position", "pk")]
+        self.assertEqual(shown, stored)
+
+
+class FieldMarkupTests(PscTestCase):
+    """Un seul rendu de champ, et des champs qui s'alignent."""
+
+    def setUp(self):
+        super().setUp()
+        self.declare(self.make_member())
+
+    def _fields(self, html):
+        return re.findall(r'<div class="psc-field([^"]*)"', html)
+
+    def test_a_text_field_carries_its_label_above(self):
+        body = self.client.get(reverse("core:disciplines")).content.decode()
+        self.assertIn('<label class="form-label" for="id_label">Libellé</label>', body)
+
+    def test_a_checkbox_carries_its_label_beside(self):
+        body = self.client.get(reverse("core:criteria")).content.decode()
+        self.assertIn("psc-field-check", body)
+        self.assertIn('class="form-check-label"', body)
+        # Jamais d'étiquette au-dessus pour une case à cocher.
+        self.assertNotIn('<label class="form-label" for="id_is_active"', body)
+
+    def test_the_submit_button_is_not_a_grid_cell(self):
+        """Placé dans la grille, il s'alignait avec les champs de saisie."""
+        body = self.client.get(reverse("core:disciplines")).content.decode()
+        # La barre de navigation porte elle aussi un formulaire : on vise la
+        # grille, pas le premier <form> venu.
+        start = body.index('class="psc-form-grid"')
+        end = body.index("psc-form-actions", start)
+        self.assertNotIn("<button", body[start:end])
+        self.assertIn("Ajouter", body[end : end + 300])
+
+    def test_no_form_aligns_its_grid_on_the_bottom(self):
+        """align-items-end désalignait les champs porteurs d'un texte d'aide."""
+        for name in ("core:disciplines", "core:criteria", "core:news"):
+            body = self.client.get(reverse(name)).content.decode()
+            self.assertNotIn("align-items-end", body, msg=name)
+
+    def test_every_club_form_uses_the_shared_field_markup(self):
+        for name in ("core:disciplines", "core:criteria", "core:news", "core:members"):
+            body = self.client.get(reverse(name)).content.decode()
+            if 'class="psc-field' in body:
+                self.assertIn("psc-field", body, msg=name)
+
+    def test_the_edition_form_uses_it_too(self):
+        edition = self.make_edition()
+        body = self.client.get(
+            reverse("events:edition_edit", args=[edition.pk])
+        ).content.decode()
+        self.assertGreaterEqual(body.count('class="psc-field"'), 8)

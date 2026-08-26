@@ -125,4 +125,59 @@
   document.body.addEventListener("htmx:sendError", function () {
     notify("Connexion perdue. Vérifiez votre réseau.");
   });
+
+  /* ----- une action à la fois -----
+     Sans cela, un double clic sur « Je participe » ou « Supprimer » part
+     deux fois. On ignore la seconde demande plutôt que de désactiver le
+     bouton, ce qui lui ferait perdre le focus. */
+
+  var inFlight = new WeakSet();
+
+  document.body.addEventListener("htmx:beforeRequest", function (event) {
+    var el = event.detail.elt;
+    if (inFlight.has(el)) {
+      event.preventDefault();
+      return;
+    }
+    inFlight.add(el);
+    el.setAttribute("data-psc-busy", "");
+    el.setAttribute("aria-busy", "true");
+  });
+
+  document.body.addEventListener("htmx:afterRequest", function (event) {
+    var el = event.detail.elt;
+    inFlight.delete(el);
+    el.removeAttribute("data-psc-busy");
+    el.removeAttribute("aria-busy");
+  });
+
+  /* ----- où va le focus après un échange -----
+     Sans cela, celui qui navigue au clavier retombe en haut de page à
+     chaque carte retournée en formulaire. */
+
+  document.body.addEventListener("htmx:afterSwap", function (event) {
+    var target = event.detail.target;
+    if (!target || !target.querySelector) return;
+
+    // Le filtrage du calendrier remplace la liste à chaque frappe : y porter
+    // le focus arracherait le curseur du champ de recherche.
+    var trigger = event.detail.requestConfig && event.detail.requestConfig.elt;
+    if (trigger && trigger.closest && trigger.closest("#calendar-filters")) return;
+
+    var first = target.querySelector("[data-autofocus]");
+    if (first) {
+      first.focus();
+      return;
+    }
+    if (!target.hasAttribute("tabindex")) target.setAttribute("tabindex", "-1");
+    target.focus({ preventScroll: true });
+  });
+
+  /* ----- annoncer ce qui vient de se passer -----
+     Le serveur pose un en-tête HX-Trigger ; le message atterrit dans la zone
+     aria-live, donc lu à voix haute autant qu'affiché. */
+
+  document.body.addEventListener("psc:said", function (event) {
+    if (event.detail && event.detail.message) notify(event.detail.message);
+  });
 })();

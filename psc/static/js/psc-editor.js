@@ -22,9 +22,50 @@
     "ql-clean": "Retirer la mise en forme",
   };
 
+  /* L'éditeur pèse une soixantaine de kilo-octets et ne sert que sur trois
+     pages sur neuf. On ne le charge qu'au moment où un champ riche apparaît,
+     y compris quand il arrive par HTMX. */
+
+  var loading = false;
+  var waiting = [];
+
+  function withQuill(run) {
+    if (window.Quill) return run();
+    waiting.push(run);
+    if (loading) return;
+    loading = true;
+
+    var body = document.body;
+    var css = document.createElement("link");
+    css.rel = "stylesheet";
+    css.href = body.getAttribute("data-quill-css");
+    document.head.appendChild(css);
+
+    var js = document.createElement("script");
+    js.src = body.getAttribute("data-quill-js");
+    js.onload = function () {
+      loading = false;
+      waiting.splice(0).forEach(function (fn) {
+        fn();
+      });
+    };
+    js.onerror = function () {
+      loading = false;
+      waiting.length = 0;
+      // Sans éditeur, le textarea d'origine reste utilisable tel quel.
+    };
+    document.head.appendChild(js);
+  }
+
   function enhance(textarea) {
-    if (typeof Quill === "undefined" || textarea.dataset.richReady === "1") return;
+    if (textarea.dataset.richReady === "1") return;
     textarea.dataset.richReady = "1";
+    withQuill(function () {
+      build(textarea);
+    });
+  }
+
+  function build(textarea) {
 
     var host = document.createElement("div");
     host.className = "psc-editor";
@@ -84,7 +125,9 @@
   }
 
   function scan(root) {
-    (root || document).querySelectorAll("textarea[data-rich]").forEach(enhance);
+    if (!root || !root.querySelectorAll) return;
+    root.querySelectorAll("textarea[data-rich]").forEach(enhance);
+    if (root.matches && root.matches("textarea[data-rich]")) enhance(root);
   }
 
   document.addEventListener("DOMContentLoaded", function () {

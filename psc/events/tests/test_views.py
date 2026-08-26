@@ -552,7 +552,7 @@ class PredictionTests(PscTestCase):
 
     def test_the_predicted_date_keeps_the_weekday(self):
         response = self.client.get(self.url)
-        prediction = response.context["months"][0][1][0]
+        prediction = response.context["months"][0]["editions"][0]
         self.assertEqual(prediction.date_start.weekday(), self.source.date_start.weekday())
         self.assertEqual(prediction.date_start.year, self.year)
 
@@ -851,3 +851,268 @@ class NavigationTests(PscTestCase):
         tag = re.search(r'<input[^>]*name="name"[^>]*>', body)
         self.assertIsNotNone(tag)
         self.assertIn(f'value="{self.event.name}"', tag.group(0))
+
+
+class ChartTests(PscTestCase):
+    """L'histogramme est calculé et rendu par le serveur, sans bibliothèque."""
+
+    def setUp(self):
+        super().setUp()
+        self.member = self.make_member()
+        self.year = datetime.date.today().year
+
+    def _with_participations(self, month, count, discipline=None):
+        for index in range(count):
+            edition = self.make_edition(
+                event=self.make_event(f"Course {month}-{index}", discipline=discipline),
+                start=datetime.date(self.year, month, 1 + index),
+            )
+            Participation.objects.create(member=self.make_member(f"M{month}{index}"),
+                                         edition=edition)
+
+    def test_an_empty_year_says_so(self):
+        response = self.client.get(reverse("events:dashboard"))
+        self.assertContains(response, "Aucune inscription enregistrée")
+
+    def test_the_chart_is_plain_html(self):
+        self._with_participations(3, 2)
+        response = self.client.get(reverse("events:dashboard"))
+        self.assertContains(response, "psc-chart-stack")
+        self.assertContains(response, "psc-chart-slice")
+
+    def test_no_decimal_comma_reaches_the_style_attributes(self):
+        """La localisation française écrivait « height: 13,44% », invalide."""
+        self._with_participations(3, 3)
+        self._with_participations(5, 1)
+        body = self.client.get(reverse("events:dashboard")).content.decode()
+        faulty = re.findall(r'style="[^"]*\d+,\d+[^"]*"', body)
+        self.assertEqual(faulty, [], f"Décimales à la virgule : {faulty[:3]}")
+
+    def test_the_labels_are_real_text_not_drawn(self):
+        """Dans un SVG mis à l'échelle, le texte rétrécit avec le dessin."""
+        self._with_participations(3, 1)
+        body = self.client.get(reverse("events:dashboard")).content.decode()
+        # Le pied de page porte des icônes SVG : on n'inspecte que la figure.
+        figure = body[body.index('<figure class="psc-chart"') :]
+        figure = figure[: figure.index("</figure>")]
+        self.assertNotIn("<svg", figure)
+        self.assertIn(">Mars<", figure)
+
+    def test_no_charting_library_is_loaded(self):
+        self._with_participations(3, 1)
+        response = self.client.get(reverse("events:dashboard"))
+        self.assertNotContains(response, "chart.umd")
+        self.assertNotContains(response, "<canvas")
+
+    def test_the_figures_are_also_available_as_a_table(self):
+        self._with_participations(3, 2)
+        response = self.client.get(reverse("events:dashboard"))
+        self.assertContains(response, "<caption>Inscriptions par mois")
+        self.assertContains(response, "<th scope=\"row\">Triathlon</th>")
+
+    def test_columns_are_proportional_to_their_value(self):
+        from events.views import build_chart
+
+        self._with_participations(3, 4)
+        self._with_participations(5, 2)
+        chart = build_chart(self.year)
+        march = chart.columns[2]
+        may = chart.columns[4]
+        self.assertEqual(march.total, 4)
+        self.assertEqual(may.total, 2)
+        self.assertAlmostEqual(march.percent, may.percent * 2, places=5)
+
+    def test_an_empty_month_keeps_its_place(self):
+        from events.views import build_chart
+
+        self._with_participations(3, 2)
+        chart = build_chart(self.year)
+        self.assertEqual(len(chart.columns), 12)
+        self.assertEqual(chart.columns[0].total, 0)
+        self.assertEqual(chart.columns[0].percent, 0)
+
+    def test_an_empty_year_still_draws_its_twelve_months(self):
+        """Un graphique vide doit rester un graphique, pas une phrase seule."""
+        response = self.client.get(reverse("events:dashboard"))
+        self.assertEqual(response.content.decode().count("psc-chart-col"), 12)
+
+    def test_the_scale_tops_at_a_readable_ceiling(self):
+        from events.chart import nice_ceiling
+
+        self.assertEqual(nice_ceiling(3), 3)
+        self.assertEqual(nice_ceiling(7), 10)
+        self.assertEqual(nice_ceiling(12), 20)
+        self.assertEqual(nice_ceiling(140), 200)
+
+    def test_the_json_endpoint_still_answers(self):
+        self._with_participations(3, 1)
+        payload = self.client.get(reverse("events:stats_json"), {"year": self.year}).json()
+        self.assertEqual(len(payload["labels"]), 12)
+        self.assertEqual(payload["datasets"][0]["data"][2], 1)
+
+
+class HtmxSafetyTests(PscTestCase):
+    def setUp(self):
+        super().setUp()
+        self.member = self.make_member()
+        self.declare(self.member)
+        self.edition = self.make_edition()
+
+    def test_a_successful_action_is_announced(self):
+        response = self.client.post(
+            reverse("events:participation", args=[self.edition.pk]), {"status": "registered"}
+        )
+        self.assertIn("psc:said", response["HX-Trigger"])
+        self.assertIn(self.edition.event.name, response["HX-Trigger"])
+
+    def test_deleting_is_announced_too(self):
+        response = self.client.post(reverse("events:edition_delete", args=[self.edition.pk]))
+        self.assertIn("psc:said", response["HX-Trigger"])
+
+    def test_the_form_marks_its_first_field_for_focus(self):
+        response = self.client.get(reverse("events:edition_edit", args=[self.edition.pk]))
+        self.assertContains(response, "data-autofocus")
+
+
+class AssetTests(PscTestCase):
+    """L'éditeur ne se charge que là où il sert."""
+
+    def test_the_calendar_does_not_pull_the_editor(self):
+        """L'adresse est dans un attribut, mais rien ne la charge au départ."""
+        body = self.client.get(reverse("events:calendar"), follow=True).content.decode()
+        loaded = re.findall(r"<(?:script|link)[^>]*(?:src|href)=\"([^\"]*quill[^\"]*)\"", body)
+        self.assertEqual(loaded, [], f"L'éditeur est chargé sans raison : {loaded}")
+        self.assertIn("data-quill-js", body)
+
+    def test_the_page_carries_the_editor_addresses_for_later(self):
+        response = self.client.get(reverse("events:dashboard"))
+        self.assertContains(response, "data-quill-js")
+        self.assertContains(response, "data-quill-css")
+
+
+class TemplateHygieneTests(PscTestCase):
+    """Un commentaire de gabarit ne doit jamais atteindre la page."""
+
+    def test_no_template_comment_leaks_into_any_page(self):
+        member = self.make_member()
+        self.declare(member)
+        edition = self.make_edition(
+            start=datetime.date.today() - datetime.timedelta(days=3)
+        )
+        urls = [
+            reverse("events:dashboard"),
+            reverse("events:calendar_year", args=[edition.year]),
+            edition.event.get_absolute_url(),
+            reverse("events:my_events"),
+            reverse("events:feedback", args=[edition.pk]),
+            reverse("events:edition_edit", args=[edition.pk]),
+            reverse("events:trash"),
+            reverse("core:club"),
+            reverse("core:disciplines"),
+            reverse("core:news"),
+        ]
+        for url in urls:
+            body = self.client.get(url).content.decode()
+            self.assertNotIn("{#", body, f"Commentaire non fermé rendu sur {url}")
+            self.assertNotIn("#}", body, f"Commentaire non fermé rendu sur {url}")
+            self.assertNotIn("{%", body, f"Balise de gabarit rendue sur {url}")
+
+
+class DensityStripTests(PscTestCase):
+    """Le bandeau de densité est aussi un moyen de navigation."""
+
+    def setUp(self):
+        super().setUp()
+        self.year = 2027
+        for day in (5, 12, 19):
+            self.make_edition(
+                event=self.make_event(f"Mars {day}"), start=datetime.date(self.year, 3, day)
+            )
+        self.make_edition(
+            event=self.make_event("Septembre"), start=datetime.date(self.year, 9, 6)
+        )
+        self.url = reverse("events:calendar_year", args=[self.year])
+
+    def test_the_twelve_months_are_always_shown(self):
+        bars = self.client.get(self.url).context["density"]
+        self.assertEqual(len(bars), 12)
+        self.assertEqual([b.label for b in bars][:3], ["Janv", "Févr", "Mars"])
+
+    def test_the_bars_carry_the_counts(self):
+        bars = self.client.get(self.url).context["density"]
+        self.assertEqual(bars[2].value, 3)
+        self.assertEqual(bars[8].value, 1)
+        self.assertEqual(bars[0].value, 0)
+
+    def test_the_tallest_month_fills_the_track(self):
+        bars = self.client.get(self.url).context["density"]
+        self.assertEqual(bars[2].percent, 100)
+        self.assertAlmostEqual(bars[8].percent, 100 / 3)
+
+    def test_a_month_with_races_links_to_its_section(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.context["density"][2].href, "#mois-03")
+        self.assertContains(response, 'id="mois-03"')
+
+    def test_an_empty_month_leads_nowhere(self):
+        self.assertEqual(self.client.get(self.url).context["density"][0].href, "")
+
+    def test_every_bar_is_described_for_screen_readers(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, "Mars 2027 : 3 épreuves")
+        self.assertContains(response, "Janvier 2027 : aucune épreuve")
+
+
+class ParticipationHistoryTests(PscTestCase):
+    def setUp(self):
+        super().setUp()
+        self.event = self.make_event("Triathlon de Deauville")
+        self.editions = [
+            self.make_edition(event=self.event, start=datetime.date(year, 6, 14))
+            for year in (2024, 2025, 2026)
+        ]
+
+    def _register(self, edition, how_many):
+        for index in range(how_many):
+            Participation.objects.create(
+                member=self.make_member(f"P{edition.year}{index}"), edition=edition
+            )
+
+    def test_one_bar_per_edition_in_chronological_order(self):
+        history = self.client.get(self.event.get_absolute_url()).context["history"]
+        self.assertEqual([bar.label for bar in history], ["2024", "2025", "2026"])
+
+    def test_the_bars_follow_the_number_of_members(self):
+        self._register(self.editions[0], 1)
+        self._register(self.editions[2], 4)
+        history = self.client.get(self.event.get_absolute_url()).context["history"]
+        self.assertEqual([bar.value for bar in history], [1, 0, 4])
+        self.assertEqual(history[2].percent, 100)
+        self.assertEqual(history[0].percent, 25)
+
+    def test_each_bar_jumps_to_its_edition(self):
+        history = self.client.get(self.event.get_absolute_url()).context["history"]
+        self.assertEqual(history[0].href, f"#edition-{self.editions[0].pk}")
+
+    def test_a_single_edition_shows_no_history(self):
+        lonely = self.make_event("Course unique")
+        self.make_edition(event=lonely, start=datetime.date(2026, 5, 1))
+        response = self.client.get(lonely.get_absolute_url())
+        self.assertNotContains(response, "Le club sur cette course")
+
+    def test_the_history_appears_from_two_editions(self):
+        response = self.client.get(self.event.get_absolute_url())
+        self.assertContains(response, "Le club sur cette course")
+
+
+class MonthLabelTests(PscTestCase):
+    def test_june_and_july_are_told_apart(self):
+        from events.models import month_abbr
+
+        self.assertEqual(month_abbr(6), "Juin")
+        self.assertEqual(month_abbr(7), "Juil")
+
+    def test_every_abbreviation_is_unique(self):
+        from events.models import MONTH_ABBR
+
+        self.assertEqual(len(set(MONTH_ABBR)), 12)

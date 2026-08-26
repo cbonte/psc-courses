@@ -1,0 +1,22 @@
+{% comment %}
+Rendu d'un champ, unique pour tout le site. Une case à cocher n'a pas
+d'étiquette au-dessus mais à côté, et prend sa propre ligne : dans une grille,
+elle ne peut pas s'aligner sur des champs qui ont, eux, une étiquette.
+{% endcomment %}
+{% if field.field.widget.input_type == "checkbox" %}
+  <div class="psc-field psc-field-check">
+    <div class="form-check">
+      {{ field }}
+      <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+    </div>
+    {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+    {{ field.errors }}
+  </div>
+{% else %}
+  <div class="psc-field{% if wide %} psc-field-wide{% endif %}">
+    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {{ field }}
+    {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+    {{ field.errors }}
+  </div>
+{% endif %}

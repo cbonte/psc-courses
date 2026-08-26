@@ -1,0 +1,8 @@
+{% comment %}
+Conteneur triable. Sans JavaScript, les boutons monter et descendre suffisent ;
+avec, le glisser-déposer poste l'ordre complet à la même liste.
+{% endcomment %}
+<div class="psc-rows psc-sortable" id="sortable-{{ config.section }}"
+     data-sortable data-order-url="{% url config.reorder_url %}">
+  {% for object in objects %}{% include config.row_template %}{% endfor %}
+</div>

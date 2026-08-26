@@ -1,0 +1,25 @@
+{% comment %}
+Série de barres en HTML : hauteur en pourcentage, chaque barre cliquable
+quand elle mène quelque part. Ni SVG ni JavaScript, imprimable, lisible au
+clavier, et le libellé complet est porté par le titre accessible.
+{% endcomment %}
+<div class="psc-bars{% if compact %} is-compact{% endif %}" role="group" aria-label="{{ caption }}">
+  {% for bar in bars %}
+    {% if bar.href %}
+      <a class="psc-bar{% if bar.current %} is-current{% endif %}" href="{{ bar.href }}"
+         title="{{ bar.caption }}">
+        <span class="psc-bar-track"><span class="psc-bar-fill" style="height: {{ bar.percent|floatformat:1 }}%"></span></span>
+        <span class="psc-bar-value" aria-hidden="true">{{ bar.value|default_if_none:"" }}</span>
+        <span class="psc-bar-label">{{ bar.label }}</span>
+        <span class="visually-hidden">{{ bar.caption }}</span>
+      </a>
+    {% else %}
+      <span class="psc-bar is-empty" title="{{ bar.caption }}">
+        <span class="psc-bar-track"><span class="psc-bar-fill" style="height: {{ bar.percent|floatformat:1 }}%"></span></span>
+        <span class="psc-bar-value" aria-hidden="true">{{ bar.value|default_if_none:"" }}</span>
+        <span class="psc-bar-label">{{ bar.label }}</span>
+        <span class="visually-hidden">{{ bar.caption }}</span>
+      </span>
+    {% endif %}
+  {% endfor %}
+</div>

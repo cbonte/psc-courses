@@ -33,16 +33,8 @@
     </div>
 
     <div class="psc-form-grid">
-      <div class="psc-field">
-        <label class="form-label" for="{{ form.date_start.id_for_label }}">{{ form.date_start.label }}</label>
-        {{ form.date_start }}
-        {{ form.date_start.errors }}
-      </div>
-      <div class="psc-field">
-        <label class="form-label" for="{{ form.discipline.id_for_label }}">{{ form.discipline.label }}</label>
-        {{ form.discipline }}
-        {{ form.discipline.errors }}
-      </div>
+      {% include "partials/_field.html" with field=form.date_start %}
+      {% include "partials/_field.html" with field=form.discipline %}
     </div>
 
     <fieldset class="psc-field">
@@ -60,45 +52,19 @@
       <summary class="psc-summary">Lieu, formats, description, liens</summary>
 
       <div class="psc-form-grid mt-2">
-        <div class="psc-field">
-          <label class="form-label" for="{{ form.city.id_for_label }}">{{ form.city.label }}</label>
-          {{ form.city }}
-        </div>
-        <div class="psc-field">
-          <label class="form-label" for="{{ form.department.id_for_label }}">{{ form.department.label }}</label>
-          {{ form.department }}
-        </div>
+        {% include "partials/_field.html" with field=form.city %}
+        {% include "partials/_field.html" with field=form.department %}
       </div>
 
-      <div class="psc-field">
-        <label class="form-label" for="{{ form.date_end.id_for_label }}">{{ form.date_end.label }}</label>
-        {{ form.date_end }}
-        <div class="form-text">{{ form.date_end.help_text }}</div>
-        {{ form.date_end.errors }}
-      </div>
+      {% include "partials/_field.html" with field=form.date_end %}
 
-      <div class="psc-field">
-        <label class="form-label" for="{{ form.formats.id_for_label }}">{{ form.formats.label }}</label>
-        {{ form.formats }}
-        <div class="form-text">{{ form.formats.help_text }}</div>
-      </div>
+      {% include "partials/_field.html" with field=form.formats %}
 
-      <div class="psc-field">
-        <label class="form-label" for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
-        {{ form.description }}
-      </div>
+      {% include "partials/_field.html" with field=form.description %}
 
       <div class="psc-form-grid">
-        <div class="psc-field">
-          <label class="form-label" for="{{ form.registration_url.id_for_label }}">{{ form.registration_url.label }}</label>
-          {{ form.registration_url }}
-          {{ form.registration_url.errors }}
-        </div>
-        <div class="psc-field">
-          <label class="form-label" for="{{ form.website.id_for_label }}">{{ form.website.label }}</label>
-          {{ form.website }}
-          {{ form.website.errors }}
-        </div>
+        {% include "partials/_field.html" with field=form.registration_url %}
+        {% include "partials/_field.html" with field=form.website %}
       </div>
     </details>
 

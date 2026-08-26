@@ -8,11 +8,17 @@
     {% endif %}
   </p>
 
-  {% for month, editions in months %}
-    <section class="psc-month">
-      <h2 class="psc-month-title">{{ month|capfirst }}</h2>
+  {% if prediction_count or edition_count %}
+    <div class="psc-density">
+      {% include "partials/_bars.html" with bars=density caption="Épreuves par mois" compact=1 %}
+    </div>
+  {% endif %}
+
+  {% for month in months %}
+    <section class="psc-month" id="mois-{{ month.number|stringformat:'02d' }}">
+      <h2 class="psc-month-title">{{ month.label|capfirst }}</h2>
       <div class="psc-edition-list">
-        {% for edition in editions %}
+        {% for edition in month.editions %}
           {% include "events/_edition_card.html" %}
         {% endfor %}
       </div>

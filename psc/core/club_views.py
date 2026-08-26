@@ -109,10 +109,15 @@ DISCIPLINES = {
     "form": DisciplineForm,
     "url": "core:disciplines",
     "section": "disciplines",
+    "reorder_url": "core:disciplines_reorder",
     "template": "core/club/disciplines.html",
     "row_template": "core/club/_discipline_row.html",
     "row_form_template": "core/club/_discipline_form.html",
-    "queryset": lambda: Discipline.objects.annotate(uses=Count("events")),
+    # order_by explicite : annotate() fait abandonner Meta.ordering à Django,
+    # et la liste sortait alors dans l'ordre de la base, pas dans le sien.
+    "queryset": lambda: Discipline.objects.annotate(uses=Count("events")).order_by(
+        "position", "pk"
+    ),
 }
 
 CRITERIA = {
@@ -120,10 +125,13 @@ CRITERIA = {
     "form": FeedbackCriterionForm,
     "url": "core:criteria",
     "section": "criteria",
+    "reorder_url": "core:criteria_reorder",
     "template": "core/club/criteria.html",
     "row_template": "core/club/_criterion_row.html",
     "row_form_template": "core/club/_criterion_form.html",
-    "queryset": lambda: FeedbackCriterion.objects.annotate(uses=Count("scores")),
+    "queryset": lambda: FeedbackCriterion.objects.annotate(uses=Count("scores")).order_by(
+        "position", "pk"
+    ),
 }
 
 NEWS = {
@@ -268,3 +276,85 @@ def activity(request):
     return render(
         request, "core/club/activity.html", {"nav": "club", "section": "activity", "entries": entries}
     )
+
+
+# --------------------------------------------------------------------------
+# Ordre des listes
+#
+# Deux chemins vers le même résultat. Les boutons monter et descendre sont de
+# vraies soumissions : ils fonctionnent sans JavaScript et se pilotent au
+# clavier, ce qu'impose l'alternative à un seul pointeur. Le glisser-déposer
+# vient par-dessus, et poste l'ordre complet.
+# --------------------------------------------------------------------------
+
+STEP = 10
+
+
+def _ordered(config):
+    return list(config["model"].objects.order_by("position", "pk"))
+
+
+def _renumber(items):
+    for index, item in enumerate(items, start=1):
+        wanted = index * STEP
+        if item.position != wanted:
+            item.position = wanted
+            item.save(update_fields=["position", "updated_at"])
+
+
+def _rows_response(request, config, status=200):
+    return render(
+        request,
+        "core/club/_rows.html",
+        {"objects": config["queryset"](), "config": config},
+        status=status,
+    )
+
+
+@require_POST
+def _move(request, pk, *, config):
+    """Décale un élément d'un cran, dans un sens ou dans l'autre."""
+    if _member(request) is None:
+        return _needs_identity()
+    direction = request.POST.get("direction")
+    items = _ordered(config)
+    index = next((i for i, item in enumerate(items) if item.pk == pk), None)
+    if index is None:
+        return _rows_response(request, config, status=404)
+
+    target = index - 1 if direction == "up" else index + 1
+    if 0 <= target < len(items):
+        items[index], items[target] = items[target], items[index]
+        _renumber(items)
+    return _rows_response(request, config)
+
+
+@require_POST
+def _reorder(request, *, config):
+    """Applique l'ordre complet envoyé par le glisser-déposer."""
+    if _member(request) is None:
+        return _needs_identity()
+    wanted = request.POST.getlist("order")
+    by_pk = {str(item.pk): item for item in _ordered(config)}
+    # On ne fait confiance à rien : les identifiants inconnus sont ignorés, et
+    # les éléments oubliés gardent leur place, à la fin.
+    items = [by_pk.pop(pk) for pk in wanted if pk in by_pk]
+    items += list(by_pk.values())
+    _renumber(items)
+    return _rows_response(request, config)
+
+
+def discipline_move(request, pk):
+    return _move(request, pk, config=DISCIPLINES)
+
+
+def disciplines_reorder(request):
+    return _reorder(request, config=DISCIPLINES)
+
+
+def criterion_move(request, pk):
+    return _move(request, pk, config=CRITERIA)
+
+
+def criteria_reorder(request):
+    return _reorder(request, config=CRITERIA)

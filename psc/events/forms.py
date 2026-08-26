@@ -37,6 +37,7 @@ class EditionForm(forms.Form):
                 "class": "form-control form-control-lg",
                 "autocomplete": "off",
                 "list": "event-names",
+                "data-autofocus": "1",
                 "placeholder": "Commencez à taper, les courses connues sont proposées",
             }
         ),

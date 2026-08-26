@@ -116,7 +116,11 @@ class EditionQuerySet(SoftDeleteQuerySet):
         return self.filter(date_start__year=year)
 
     def with_details(self):
-        return self.select_related("event", "event__discipline").annotate(
+        # annotate() fait abandonner Meta.ordering : on le repose ici pour que
+        # tout appelant qui n'ordonne pas explicitement reste chronologique.
+        return self.order_by("date_start", "event__name").select_related(
+            "event", "event__discipline"
+        ).annotate(
             participation_count=Count(
                 "participations",
                 filter=Q(participations__status=Participation.Status.REGISTERED),
@@ -380,8 +384,19 @@ MONTH_NAMES = [
 ]
 
 
+# Tronquer à trois lettres confondrait juin et juillet.
+MONTH_ABBR = [
+    "Janv", "Févr", "Mars", "Avr", "Mai", "Juin",
+    "Juil", "Août", "Sept", "Oct", "Nov", "Déc",
+]
+
+
 def month_label(month):
     return MONTH_NAMES[month - 1]
+
+
+def month_abbr(month):
+    return MONTH_ABBR[month - 1]
 
 
 def season_bounds(year):

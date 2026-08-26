@@ -1,0 +1,24 @@
+{% comment %}
+Poignée de déplacement et son alternative à un seul pointeur : deux boutons
+qui sont de vraies soumissions, donc utilisables sans JavaScript et au
+clavier. WCAG 2.5.7 impose cette alternative à tout geste de glissement.
+{% endcomment %}
+<span class="psc-grip" data-grip title="Déplacer" aria-hidden="true">
+  <svg class="psc-icon"><use href="#i-grip"/></svg>
+</span>
+<span class="psc-move">
+  <button type="button" class="psc-move-btn"
+          hx-post="{% url move_url object.pk %}" hx-vals='{"direction": "up"}'
+          hx-target="#sortable-{{ config.section }}" hx-swap="outerHTML"
+          {% if forloop.first %}disabled{% endif %}
+          aria-label="Monter {{ object }}">
+    <svg class="psc-icon"><use href="#i-up"/></svg>
+  </button>
+  <button type="button" class="psc-move-btn"
+          hx-post="{% url move_url object.pk %}" hx-vals='{"direction": "down"}'
+          hx-target="#sortable-{{ config.section }}" hx-swap="outerHTML"
+          {% if forloop.last %}disabled{% endif %}
+          aria-label="Descendre {{ object }}">
+    <svg class="psc-icon"><use href="#i-down"/></svg>
+  </button>
+</span>

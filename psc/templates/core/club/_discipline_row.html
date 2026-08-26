@@ -1,8 +1,9 @@
-<div class="psc-row" id="discipline-{{ object.pk }}">
+<div class="psc-row" id="discipline-{{ object.pk }}" data-pk="{{ object.pk }}">
+  {% include "core/club/_handle.html" with move_url="core:discipline_move" %}
   <span class="psc-swatch" style="background: {{ object.color }}" aria-hidden="true"></span>
   <div class="psc-row-main">
     <strong>{{ object.label }}</strong>
-    <span class="psc-muted small">{{ object.slug }} · {{ object.color }} · ordre {{ object.position }}</span>
+    <span class="psc-muted small">{{ object.slug }} · {{ object.color }}</span>
     {% if blocked %}
       <p class="psc-row-warn mb-0">Impossible de supprimer : {{ object.uses }} course{{ object.uses|pluralize }} utilise{{ object.uses|pluralize:",nt" }} encore cette discipline.</p>
     {% endif %}

@@ -1,5 +1,7 @@
-{# Retour explicite : le bouton du navigateur ne suffit pas quand on arrive
-   par un lien partagé ou depuis un signet. #}
+{% comment %}
+Retour explicite : le bouton du navigateur ne suffit pas quand on arrive
+par un lien partagé ou depuis un signet.
+{% endcomment %}
 <a class="psc-back" href="{{ url }}">
   <svg class="psc-icon" aria-hidden="true"><use href="#i-back"/></svg>{{ label }}
 </a>

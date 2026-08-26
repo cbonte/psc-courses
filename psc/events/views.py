@@ -1,4 +1,5 @@
 import datetime
+import json
 from collections import OrderedDict, defaultdict
 
 from django.db.models import Avg, Count, Prefetch, Q
@@ -10,6 +11,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from core.models import Activity, News
+from events import chart as chart_builder
 from events.forms import EditionForm, FeedbackForm
 from events.icalendar import build_calendar
 from events.models import (
@@ -90,6 +92,7 @@ def dashboard(request):
             "recent_feedbacks": recent_feedbacks,
             "my_next": my_next,
             "news": News.objects.filter(is_published=True, published_at__lte=timezone.now())[:3],
+            "chart": build_chart(_current_year()),
             "year": _current_year(),
             "has_any_edition": EventEdition.objects.exists(),
         },
@@ -142,9 +145,11 @@ def _filtered_editions(request, year):
 def _group_by_month(editions):
     grouped = OrderedDict()
     for edition in editions:
-        key = edition.date_start.month
-        grouped.setdefault(key, []).append(edition)
-    return [(month_label(month), items) for month, items in grouped.items()]
+        grouped.setdefault(edition.date_start.month, []).append(edition)
+    return [
+        {"number": month, "label": month_label(month), "editions": items}
+        for month, items in grouped.items()
+    ]
 
 
 def _my_edition_ids(request, editions):
@@ -192,10 +197,14 @@ def _calendar_context(request, year):
     navigable = known_years | {year, _current_year()}
     # Une année d'avance, pour commencer à poser la saison suivante.
     navigable.add(max(navigable) + 1)
+    months = _group_by_month(rows)
     return {
         "year": year,
         "years": sorted(navigable),
-        "months": _group_by_month(rows),
+        "months": months,
+        "density": chart_builder.month_density(
+            months, year, lambda number: f"#mois-{number:02d}"
+        ),
         "edition_count": len(editions),
         "prediction_count": len(predictions),
         "disciplines": Discipline.objects.all(),
@@ -251,6 +260,7 @@ def event_detail(request, slug):
         "events/event_detail.html",
         {
             "event": event,
+            "history": chart_builder.participation_history(editions, timezone.localdate()),
             "back_url": reverse("events:calendar_year", args=[editions[0].year])
             if editions
             else reverse("events:calendar"),
@@ -317,7 +327,7 @@ def participation_toggle(request, pk):
     edition = (
         EventEdition.objects.with_details().prefetch_related("formats").get(pk=edition.pk)
     )
-    return render(
+    response = render(
         request,
         "events/_participation.html",
         {
@@ -325,6 +335,12 @@ def participation_toggle(request, pk):
             "my_participations": _my_edition_ids(request, [edition]),
             "today": timezone.localdate(),
         },
+    )
+    return _say(
+        response,
+        f"Vous n'êtes plus inscrit à {edition.event.name}."
+        if action == "leave"
+        else f"Inscription enregistrée pour {edition.event.name}.",
     )
 
 
@@ -402,33 +418,43 @@ def edition_ics(request, pk):
 # --------------------------------------------------------------------------
 
 
-def stats_json(request):
-    """Inscriptions par mois et par discipline, pour le graphique du tableau de bord."""
-    year = int(request.GET.get("year") or _current_year())
+def monthly_participation(year):
+    """Inscriptions par mois et par discipline, pour une année.
+
+    Sert au graphique du tableau de bord, rendu en SVG côté serveur, et à
+    l'endpoint JSON pour qui voudrait rejouer les mêmes chiffres.
+    """
     rows = (
         Participation.objects.filter(
             edition__date_start__year=year, status=Participation.Status.REGISTERED
         )
-        .values("edition__date_start__month", "edition__event__discipline__label",
-                "edition__event__discipline__color")
+        .values(
+            "edition__date_start__month",
+            "edition__event__discipline__label",
+            "edition__event__discipline__color",
+        )
         .annotate(total=Count("id"))
     )
-
     series = defaultdict(lambda: [0] * 12)
     colors = {}
     for row in rows:
         label = row["edition__event__discipline__label"] or "Autre"
         colors[label] = row["edition__event__discipline__color"] or "#6c757d"
         series[label][row["edition__date_start__month"] - 1] = row["total"]
+    return [
+        {"label": label, "data": data, "color": colors[label]}
+        for label, data in sorted(series.items())
+    ]
 
+
+def stats_json(request):
+    """Les mêmes chiffres, en JSON."""
+    year = int(request.GET.get("year") or _current_year())
     return JsonResponse(
         {
             "year": year,
             "labels": [month_label(month).capitalize() for month in range(1, 13)],
-            "datasets": [
-                {"label": label, "data": data, "color": colors[label]}
-                for label, data in sorted(series.items())
-            ],
+            "datasets": monthly_participation(year),
         }
     )
 
@@ -486,6 +512,16 @@ def _return_to(request):
 def _redirect_response(target):
     response = HttpResponse(status=204)
     response["HX-Redirect"] = target
+    return response
+
+
+def _say(response, message):
+    """Fait annoncer un message à l'écran et aux lecteurs d'écran.
+
+    Une action HTMX réussie ne laissait aucune trace audible : la carte
+    changeait, et c'est tout.
+    """
+    response["HX-Trigger"] = json.dumps({"psc:said": {"message": message}})
     return response
 
 
@@ -548,7 +584,10 @@ def edition_edit(request, pk):
         Activity.log(member, Activity.Action.UPDATED, edition)
         # Depuis la fiche d'une course, la carte du calendrier n'aurait pas de
         # sens : on rend la page d'où le geste est parti.
-        return _redirect_response(back) if back else _card_response(request, edition)
+        message = f"{edition.event.name} a été modifiée."
+        return _say(
+            _redirect_response(back) if back else _card_response(request, edition), message
+        )
 
     return render(
         request,
@@ -578,11 +617,10 @@ def edition_delete(request, pk):
     Activity.log(member, Activity.Action.DELETED, edition)
     back = _return_to(request)
     if back:
-        return _redirect_response(back)
-    return render(
-        request,
-        "events/_edition_deleted.html",
-        {"edition": edition, "label": label},
+        return _say(_redirect_response(back), f"{label} a été supprimée.")
+    return _say(
+        render(request, "events/_edition_deleted.html", {"edition": edition, "label": label}),
+        f"{label} a été supprimée. La corbeille la conserve.",
     )
 
 
@@ -595,7 +633,7 @@ def edition_restore(request, pk):
         edition.event.restore()
     Activity.log(member, Activity.Action.RESTORED, edition)
     if request.headers.get("HX-Request") == "true":
-        return _card_response(request, edition)
+        return _say(_card_response(request, edition), f"{edition} est de retour au calendrier.")
     return redirect(edition.get_absolute_url())
 
 
@@ -648,7 +686,10 @@ def prediction_confirm(request, pk, year):
                 position=entry.position,
             )
         Activity.log(member, Activity.Action.CREATED, edition, "confirmée depuis la prédiction")
-        return _card_response(request, edition)
+        return _say(
+            _card_response(request, edition),
+            f"{edition.event.name} est inscrite au calendrier.",
+        )
 
     # La course a été inscrite entretemps par quelqu'un d'autre.
     existing = EventEdition.objects.filter(event=source.event, date_start__year=year).first()
@@ -727,10 +768,13 @@ def prediction_dismiss(request, pk, year):
     Activity.log(
         member, Activity.Action.UPDATED, source.event, f"proposition {year} écartée"
     )
-    return render(
-        request,
-        "events/_prediction_dismissed.html",
-        {"event": source.event, "source": source, "year": year},
+    return _say(
+        render(
+            request,
+            "events/_prediction_dismissed.html",
+            {"event": source.event, "source": source, "year": year},
+        ),
+        f"{source.event.name} n'est plus proposée pour {year}.",
     )
 
 
@@ -749,3 +793,10 @@ def prediction_restore(request, pk, year):
         "events/_edition_card.html",
         {"edition": prediction, "my_participations": {}, "today": timezone.localdate()},
     )
+
+
+def build_chart(year):
+    """Prépare la géométrie de l'histogramme du tableau de bord."""
+    from events.models import MONTH_ABBR
+
+    return chart_builder.build(year, monthly_participation(year), MONTH_ABBR)

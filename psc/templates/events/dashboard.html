@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load psc rich static %}
+{% load psc rich %}
 {% block title %}Tableau de bord{% endblock %}
 
 {% block content %}
@@ -107,15 +107,8 @@
     <h2 class="psc-card-title mb-0">Inscriptions par mois</h2>
     <span class="psc-muted small">{{ year }}</span>
   </div>
-  <div class="psc-chart-wrap">
-    <canvas id="psc-chart" data-url="{% url 'events:stats_json' %}?year={{ year }}"
-            aria-label="Nombre d'inscriptions par mois et par discipline" role="img"></canvas>
-  </div>
-  <p id="psc-chart-empty" class="psc-muted d-none mb-0">Aucune inscription enregistrée pour {{ year }}.</p>
+  {% include "events/_chart.html" %}
 </section>
 {% endblock %}
 
-{% block scripts %}
-<script src="{% static 'vendor/chart.umd.min.js' %}"></script>
-<script src="{% static 'js/psc-chart.js' %}"></script>
-{% endblock %}
+

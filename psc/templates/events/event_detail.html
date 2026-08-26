@@ -30,6 +30,13 @@
   </div>
 </div>
 
+{% if history|length > 1 %}
+  <section class="psc-card mb-4">
+    <h2 class="psc-card-title">Le club sur cette course</h2>
+    {% include "partials/_bars.html" with bars=history caption="Membres inscrits par édition" %}
+  </section>
+{% endif %}
+
 <div id="edition-form"></div>
 
 {% if event.description %}
