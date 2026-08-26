@@ -1,0 +1,15 @@
+# Configuration de ruff, dans son fichier propre plutôt que dans un
+# pyproject.toml. Vercel installe les dépendances avec uv, qui refuse un
+# pyproject.toml dépourvu de table [project] ; et déclarer un projet Python
+# ici dupliquerait la liste des dépendances déjà tenue par requirements.txt.
+
+line-length = 100
+target-version = "py311"
+exclude = ["*/migrations/*", "venv", ".venv"]
+
+[lint]
+select = ["E", "F", "W", "I", "UP", "B", "DJ", "C4"]
+ignore = ["E501"]
+
+[lint.isort]
+known-first-party = ["core", "events", "psc"]

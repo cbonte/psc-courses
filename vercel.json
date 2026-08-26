@@ -1,9 +1,0 @@
-{
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "functions": {
-    "psc/psc/wsgi.py": {
-      "maxDuration": 30,
-      "excludeFiles": "{**/tests/**,**/test_*.py,docs/**,data/**,.venv/**,venv/**}"
-    }
-  }
-}

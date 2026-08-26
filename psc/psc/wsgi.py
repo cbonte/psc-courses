@@ -1,16 +1,21 @@
-"""
-WSGI config for psc project.
+"""Point d'entrée WSGI.
 
-It exposes the WSGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/3.1/howto/deployment/wsgi/
+En local, manage.py vit dans psc/ : Python y cherche les modules, et
+« psc.settings » désigne psc/psc/settings.py. Sur un hébergement qui importe
+ce fichier depuis la racine du dépôt, « psc » désigne le répertoire externe et
+le réglage devient introuvable. Le répertoire qui contient manage.py est donc
+ajouté explicitement au chemin de recherche.
 """
 
 import os
+import sys
 
-from django.core.wsgi import get_wsgi_application
+RACINE_PROJET = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if RACINE_PROJET not in sys.path:
+    sys.path.insert(0, RACINE_PROJET)
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'psc.settings')
+from django.core.wsgi import get_wsgi_application  # noqa: E402
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "psc.settings")
 
 application = get_wsgi_application()
