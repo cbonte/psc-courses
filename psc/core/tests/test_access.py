@@ -55,3 +55,47 @@ class SharedAccessTests(PscTestCase):
     def test_healthcheck_is_public(self):
         self.revoke_access()
         self.assertEqual(self.client.get(reverse("core:healthz")).status_code, 200)
+
+
+class AttemptCounterTests(PscTestCase):
+    """Le compteur de tentatives vit en base, pas en mémoire du processus."""
+
+    def setUp(self):
+        super().setUp()
+        self.revoke_access()
+
+    def _rows(self):
+        from django.db import connection
+
+        with connection.cursor() as cursor:
+            cursor.execute("select count(*) from psc_cache")
+            return cursor.fetchone()[0]
+
+    def test_the_backend_is_the_database(self):
+        from django.conf import settings
+
+        self.assertEqual(
+            settings.CACHES["default"]["BACKEND"],
+            "django.core.cache.backends.db.DatabaseCache",
+        )
+
+    def test_a_failed_attempt_is_written_to_the_database(self):
+        self.assertEqual(self._rows(), 0)
+        self.client.post(reverse("core:access"), {"password": "non"})
+        self.assertEqual(self._rows(), 1)
+
+    @override_settings(PSC_ACCESS_MAX_ATTEMPTS=3)
+    def test_the_count_survives_a_fresh_client(self):
+        """Un nouveau client vaut une nouvelle instance : le compteur tient."""
+        from django.test import Client
+
+        for _ in range(3):
+            Client().post(reverse("core:access"), {"password": "non"})
+        response = Client().post(reverse("core:access"), {"password": ACCESS_PASSWORD})
+        self.assertEqual(response.status_code, 429)
+
+    def test_a_success_clears_the_counter(self):
+        self.client.post(reverse("core:access"), {"password": "non"})
+        self.assertEqual(self._rows(), 1)
+        self.client.post(reverse("core:access"), {"password": ACCESS_PASSWORD})
+        self.assertEqual(self._rows(), 0)

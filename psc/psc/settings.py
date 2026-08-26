@@ -135,6 +135,21 @@ DATABASES = {
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
+# Cache
+#
+# En base, et non en mémoire du processus. Le compteur de tentatives de la page
+# d'accès est la seule chose qui y vit aujourd'hui : en mémoire, il repartait de
+# zéro à chaque processus, donc à chaque instance sur un hébergement sans
+# serveur, et le plafond ne se déclenchait jamais.
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": "psc_cache",
+    }
+}
+
+
 # Accès partagé
 #
 # Le site entier est protégé par un mot de passe unique, stocké haché. Générer
